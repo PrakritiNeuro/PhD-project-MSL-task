@@ -19,10 +19,9 @@ function varargout = stim(varargin)
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
-
-% Edit the above text to modify the response to help stim
-
-% Last Modified by GUIDE v2.5 31-Oct-2014 09:36:24
+%
+% Ella Gabitov, October 2022
+%
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -43,202 +42,219 @@ else
 end
 % End initialization code - DO NOT EDIT
 
+end
+
+%% STIM
 
 % --- Executes just before stim is made visible.
 function stim_OpeningFcn(hObject, eventdata, handles, varargin)
-% This function has no output args, see OutputFcn.
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to stim (see VARARGIN)
+    % This function has no output args, see OutputFcn.
+    % hObject    handle to figure
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    % varargin   command line arguments to stim (see VARARGIN)
+    
+    % get PsychHID linked and loaded on MS-Windows
+    currentOS = lower(system_dependent('getos'));
+    if contains(currentOS,'microsoft')
+        LoadPsychHID
+    end
+    
+    % Choose default command line output for stim
+    handles.output = hObject;
+    
+    % Update handles structure
+    guidata(hObject, handles);
+    
+    [main_dpath,~,~] = fileparts(which('stim.m'));
+    
+    % add directories with stimuli/ and experiments/ to the MATLAB path
+    addpath(fullfile(main_dpath,'stimuli'))
+    addpath(fullfile(main_dpath,'experiments'))
+    addpath(fullfile(main_dpath,'analysis'))
+    
+    % Get parameters for the experiment from get_param....m
+    param = get_param_tmr_msl();
+    
+    % set the path to the main directory
+    param.main_dpath = main_dpath;
+    
+    % create and set the path to the output directory
+    output_dpath = fullfile(main_dpath,'output');
+    if ~exist(output_dpath, 'dir')
+        mkdir(output_dpath) % create output dir
+    end
+    param.output_dpath = output_dpath;
+    
+    % Set param to application data collection
+    % Is accessed in stim: param = getappdata(0,'...');
+    % Should be removed when done using rmappdata
+    setappdata(0,'param', param);
+    
+    setStimMenu(handles);
 
-% Choose default command line output for stim
-handles.output = hObject;
-
-% Update handles structure
-guidata(hObject, handles);
-
-% UIWAIT makes stim wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
-
-global EXPERIMENT;
-global HOME;
-EXPERIMENT = 'stim Project';
-HOME = which('stim');
-HOME = HOME(1:length(HOME)-6);
-
-% Create Output directory if it doesn't exists
-outputDir = strcat(HOME,'output');
-if ~exist(outputDir, 'dir')
-    mkdir(outputDir) % create output dir
 end
-
-% add stimuli/ and experiments/ to the MATLAB path
-addpath(strcat(HOME,'stimuli'))
-addpath(strcat(HOME,'experiments'))
-addpath(strcat(HOME,'analysis'))
-
-% --- TO RUN ONLY ONE DESIGN --- %
-% --- should be removed if stim_ChooseDesign is used
-% -----------------------------------------------------------------------
-% design_desc = stim_ChooseDesign();%'IntR_1hand';
-% Get parameters from paramters....m
-run([HOME, 'experiments' filesep 'ld_parameters']);
-% Set param to application data collection
-% Is accessed in stim: param = getappdata(0,'...');
-% Should be removed when done using rmappdata
-setappdata(0,'param', param);
-% -----------------------------------------------------------------------
-
-setExperimentButton(handles);
-pos = get(handles.uipanel_stim_Project, 'Position');
-pos(2) = 2;
-set(handles.uipanel_stim_Project, 'Position', pos);
-set(handles.uipanel_stim_Project, 'Visible', 'On');
 
 % --- Outputs from this function are returned to the command line.
 function varargout = stim_OutputFcn(hObject, eventdata, handles) 
-% varargout  cell array for returning output args (see VARARGOUT);
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+    % varargout  cell array for returning output args (see VARARGOUT);
+    % hObject    handle to figure
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    
+    % Get default command line output from handles structure
+    varargout{1} = handles.output;
 
-% Get default command line output from handles structure
-varargout{1} = handles.output;
-
-
-%%%%%%%%%%%
-%  Buttons 
-%%%%%%%%%%%
-function associate_HandSoundSequence(subject, outputDir, param)
-
-hand_possibilities = 1:length(param.hands);
-sound_possibilities = 1:length(param.sounds);
-hand_choice = randi(hand_possibilities);
-sound_choice = randi(sound_possibilities);
-
-HandSoundSequenceAssociation.seqA.hand = param.hands{hand_choice};
-hand_possibilities(hand_possibilities==hand_choice) = [];
-HandSoundSequenceAssociation.seqB.hand = param.hands{hand_possibilities(1)};
-
-HandSoundSequenceAssociation.seqA.sound = param.sounds{sound_choice};
-sound_possibilities(sound_possibilities==sound_choice) = [];
-HandSoundSequenceAssociation.seqB.sound = param.sounds{sound_possibilities(1)};
-
-param.task = 'HandSoundSequenceAssociation';
-
-savefile_HandSoundSequenceAssociation(param, HandSoundSequenceAssociation);
-
-% --- Executes on button press in PreSleep or PostSleep.
-% Those are separate sessions of the experiment
-function param = Start_experiment(D_EXPERIMENT,handles)
-
-% Get param from application data collection
-% Is defined in stim_ChooseDesign
-% Should be removed when done using rmappdata
-param = getappdata(0,'param');
-
-
-param.numMonitor = get(handles.radiobuttonYesSecondMonitor, 'Value');
-param.flipMonitor = get(handles.radiobuttonYesFlipMonitor, 'Value');
-
-% Common parameters        
-param.subject = get(handles.editSubject, 'String');
-
-if ~exist(param.outputDir, 'dir')
-    mkdir(param.outputDir) % create subject output dir
 end
-associate_HandSoundSequence(param.subject, param.outputDir, param)
 
-load([param.outputDir, param.subject,'_','HandSoundSequenceAssociation',...
-    '.mat'], 'HandSoundSequenceAssociation')
-
-param.HandSoundSequenceAssociation = HandSoundSequenceAssociation;
-
-param.outputDir = get(handles.editOutputDir, 'String');
-param.fullscreen = get(handles.radiobuttonFullScreenYes, 'Value');
-
-% Sequences
-param.seqA = str2num(get(handles.editSeqA, 'String'));
-param.seqB = str2num(get(handles.editSeqB, 'String'));
-
+%% BUTTONS
 
 % --- Executes on button press in buttonResults
 function button_PreSleep_Callback(hObject, eventdata, handles)
-% hObject    handle to buttonStart (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+    % hObject    handle to buttonStart (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    
+    exp_phase = 'PostSleep';
+    param = start_experiment(handles);
+    ld_menuPreSleep(exp_phase, param);
 
-global D_EXPERIMENT;
-D_EXPERIMENT = 'PreSleep';
-param = Start_experiment(D_EXPERIMENT,handles);
-ld_menuPreSleep(param);
+end
 
 
 % --- Executes on button press in buttonResults
 function button_PostSleep_Callback(hObject, eventdata, handles)
-% hObject    handle to buttonStart (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+    % hObject    handle to buttonStart (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    
+    exp_phase = 'PostSleep';
+    param = start_experiment(handles);
+    ld_menuPostSleep(exp_phase, param);
 
-global D_EXPERIMENT;
-D_EXPERIMENT = 'PostSleep';
-param = Start_experiment(D_EXPERIMENT,handles);
-ld_menuPostSleep(param);
+end
 
 
 % --- Executes on button press in buttonResults
 function buttonResults_Callback(hObject, eventdata, handles)
-% hObject    handle to buttonStart (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-param = getappdata(0,'param');
-ld_runAnalysis(param.outputDir)
+    % hObject    handle to buttonStart (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    param = getappdata(0,'param');
+    ld_runAnalysis(param.output_dpath)
+
+end
+
 
 % --- Executes on button press in buttonQuit.
 function buttonQuit_Callback(hObject, eventdata, handles)
-% hObject    handle to buttonQuit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-rmappdata(0, 'param');
-clear;
-close;
+    % hObject    handle to buttonQuit (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    rmappdata(0, 'param');
+    
+    [main_dpath,~,~] = fileparts(which('stim.m'));
+    
+    % remove directories with stimuli/ and experiments/ from the MATLAB path
+    rmpath(fullfile(main_dpath,'stimuli'))
+    rmpath(fullfile(main_dpath,'experiments'))
+    rmpath(fullfile(main_dpath,'analysis'))
+    
+    clear;
+    close;
 
-%%%%%%%%%%%%%%%%%%
-%  Utilities
-%%%%%%%%%%%%%%%%%%
-
-function setExperimentButton(handles)
-
-% Buttons and panel properties
-set(handles.button_PreSleep_Callback, 'FontWeight', 'normal');
-set(handles.button_PostSleep_Callback, 'FontWeight', 'normal');
-set(handles.uipanel_stim_Project, 'Visible', 'off');
-
-
-% Get param from application data collection
-% Is defined in stim_ChooseDesign
-% Should be removed when done using rmappdata
-param = getappdata(0,'param');
-
-set(handles.editOutputDir, 'String',param.outputDir);
-set(handles.editSeqA, 'String', num2str(param.seqA));
-set(handles.editSeqB, 'String', num2str(param.seqB));
-
-if param.fullscreen == 1
-    set(handles.radiobuttonFullScreenYes, 'Value', 1);
-else
-    set(handles.radiobuttonFullScreenNo, 'Value', 1);
 end
 
-if param.numMonitor == 1
-    set(handles.radiobuttonYesSecondMonitor, 'Value', 1);
-else
-    set(handles.radiobuttonNoSecondMonitor, 'Value', 1);
+%%  UTILITIES
+
+% --- Is called when stim is opening
+function setStimMenu(handles)
+
+    % Get param from application data collection
+    % Is defined in stim_ChooseDesign
+    % Should be removed when done using rmappdata
+    param = getappdata(0,'param');
+    
+    set(handles.dispOutputDir, 'String',param.output_dpath);
+    set(handles.dispSeqA, 'String', num2str(param.seqs{1}));
+    set(handles.dispSeqB, 'String', num2str(param.seqs{2}));
+    
+    if param.fullScreen
+        set(handles.radiobuttonYesFullScreen, 'Value', 1);
+    else
+        set(handles.radiobuttonNoFullScreen, 'Value', 1);
+    end
+    
+    if param.flipScreen
+        set(handles.radiobuttonYesFlipScreen, 'Value', 1);
+    else
+        set(handles.radiobuttonNoFlipScreen, 'Value', 1);
+    end
+    
+    if param.twoMonitors
+        set(handles.radiobuttonYesTwoMonitors, 'Value', 1);
+    else
+        set(handles.radiobuttonNoTwoMonitors, 'Value', 1);
+    end
 end
 
-if param.flipMonitor == 1
-    set(handles.radiobuttonYesFlipMonitor, 'Value', 1);
-else
-    set(handles.radiobuttonNoFlipMonitor, 'Value', 1);
+
+% --- Is called on button press in PreSleep or PostSleep
+% Those are separate sessions of the experiment
+function param = start_experiment(handles)
+
+    % Get param from application data collection
+    % Is defined in stim_ChooseDesign
+    % Should be removed when done using rmappdata
+    param_default = getappdata(0,'param');
+    
+    subject = get(handles.editSubject, 'String');
+    param_fpath = fullfile(param_default.output_dpath, [subject '_param.mat']);
+    
+    param = [];
+    % load existing param file
+    if exist(param_fpath, 'file')
+        param_load = load(param_fpath);
+        param = param_load.param;
+        if isfield(param_load.param, 'soundHandSeq')
+            param = param_load.param;
+        end
+    end
+
+    % set param structure if soundHandSeq field doesn't exist
+    if isempty(param)
+        param = param_default;
+        param.subject = subject;
+        param.soundHandSeq = getSoundHandSeq(param);
+    end
+    
+    param.fullScreen = get(handles.radiobuttonYesFullScreen, 'Value');
+    param.flipScreen = get(handles.radiobuttonYesFlipScreen, 'Value');
+    param.twoMonitors = get(handles.radiobuttonYesTwoMonitors, 'Value');
+    
+    save(param_fpath, 'param');
+    setappdata(0,'param', param);
+
 end
+
+
+% --- Is used to create sound-hand-sequence association
+% Is created only once for each participant when PreSleep
+% of PostSleep button is pressed
+function soundHandSeq = getSoundHandSeq(param)
+    
+    % Assumption: there is the same number of sounds, hands, and sequences
+
+    inds_sounds = randsample(1:numel(param.sounds), numel(param.sounds));
+    inds_hands = randsample(1:numel(param.hands), numel(param.hands));
+    inds_seqs = randsample(1:numel(param.seqs), numel(param.seqs));
+
+    soundHandSeq = [];
+    for i = 1:numel(inds_sounds)
+        soundHandSeq(i).sound = param.sounds{inds_sounds(i)};
+        soundHandSeq(i).hand = param.hands{inds_hands(i)};
+        soundHandSeq(i).seq = param.seqs{inds_seqs(i)};
+    end
+    
+end
+

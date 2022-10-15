@@ -1,23 +1,22 @@
 function [quit, keysPressed, timePressed] = displayMessage(currentKeyboard, window, message, duration, nbKeys, frequency, color, size)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% [quit, keysPressed, timePressed] = en_stimCross(duration, nbKeys, color,
-% size, frequence, responseBox, timeOffset)
+% [quit, keysPressed, timePressed] = displayMessage(currentKeyboard,
+% window, message, duration, nbKeys, frequency, color, size)
 %
-% White cross in the middle of the screen blinking at a certain pace
 % Cogent is required. (ESC to exit)
 %
 % INPUT:
-%   duration:       duration of the stimulus in secs (0 = infinite)
-%   nbKeys:         number of keys pressed before exit (0 = unlimited)
-%   color:          'red', 'green', 'blue', 'white', 'black', 'yellow', 'orange'
-%   size:           font height ex: 20, 40, 60, 80... (default=100)
-%   frequence:      frequence of the blinking in Hz (0 = no blink)
-%   responseBox:    0: Current Design, default (cgKeyMap), 1: kinematic (KbCheck), 2: Current Design (Release button)
-%   timeOffset:     offset to add to the time vector (optional default = 0)
+%   currentKeyboard
+%   duration        duration of the stimulus in secs (0 = infinite)
+%   nbKeys          number of keys pressed before exit (0 = unlimited)
+%   frequency       frequence of the blinking in Hz (0 = no blink)
+%   color           'red', 'green', 'blue', 'white', 'black', 'yellow', 'orange'
+%   size            font height ex: 20, 40, 60, 80... (default=100)
+%
 % OUTPUT:
-%   quit:           exited before the end (ESC)? (0: no   1:yes)
-%   keysPressed:    vector containing keys that have been pressed 
-%   timePressed:    vector containing the time when the keys were pressed
+%   quit            exited before the end (ESC)? (0: no, 1:yes)
+%   keysPressed     vector containing keys that have been pressed 
+%   timePressed     vector containing the time when the keys were pressed
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Init
@@ -70,8 +69,8 @@ else
         [quit, keysTmp, timeTmp] = ReadKeys(currentKeyboard, timeStartReading, 1/frequency,0);
         keysPressed = cat(2,keysPressed,keysTmp);
         timePressed = cat(2,timePressed,timeTmp);
-        if quit break; end
-        if GetSecs-timeStartExperience >= duration break; end    
+        if quit, break; end
+        if GetSecs-timeStartExperience >= duration, break; end    
 
         % Display black screen
         Screen('FillRect', window, BlackIndex(window));
@@ -82,6 +81,6 @@ else
         [quit, keysTmp, timeTmp] = ReadKeys(currentKeyboard, timeStartReading, 1/frequency,0);
         keysPressed = cat(2,keysPressed,keysTmp);
         timePressed = cat(2,timePressed,timeTmp);
-        if quit break; end
+        if quit, break; end
     end
 end

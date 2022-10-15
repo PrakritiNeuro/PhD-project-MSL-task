@@ -1,4 +1,4 @@
-function ld_menuPreSleep(param)
+function ld_menuPreSleep(exp_phase, param)
 %MENU_D_ONE Summary of this function goes here
 %   Detailed explanation goes here
 %
@@ -6,51 +6,51 @@ function ld_menuPreSleep(param)
 % Vo An Nguyen 2010/10/07
 % Arnaud Bore 2012/10/05, CRIUGM - arnaud.bore@gmail.com
 % Arnaud Bore 2014/10/31 
-% EG March 9, 2015     
+% Ella Gabitov, March 9, 2015     
 % Arnaud Bore 2016/06/02
+% Ella Gabitov, October 2022
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-global D_EXPERIMENT;
     nextMenu = 1;
     
     while nextMenu
         choice = menu(...
-                       strcat('Menu - ', D_EXPERIMENT),...
+                       strcat('Menu - ', exp_phase),...
                        'Sound Volume Adjustment',...
-                       'Finger Mapping',...
-                       'Sequence Familiarization', ...
-                       'Sound-Hand-Sequence Association',...
+                       'Introduction - Finger Mapping',...
+                       'Introduction - Sequences', ...
+                       'Introduction - Sound-Hand-Sequence',...
                        'Training - Phase 1', ...
                        'Training - Phase 2', ...
                        'Training - Phase 3', ...
                        'Test', ...
                        'Quit'...
                        );
-        sessionName = D_EXPERIMENT;  % 'PreSleep'
 
         switch choice
             case 1
-                param.task = ['Sound Volume Adjustment - ', sessionName];
+                param.task = [exp_phase, '_soundVolumeAdjustment'];
                 ld_adjustVolume(param);
             case 2
-                param.task = ['Finger Mapping - ', sessionName];
-                ld_verification(param);
+                param.task = [exp_phase, '_introFingerMapping'];
+                ld_introFingerMapping(param);
             case 3
-                param.task = ['Sequence Familiarization - ', sessionName];
-                ld_intro(param);
+                param.task = [exp_phase, '_introSeq'];
+                ld_introSeq(param);
             case 4
-                param.task = ['Sound-Hand-Sequence Association - ', sessionName];
-                ld_sound_sequence_association(param);
+                param.task = [exp_phase, '_introSoundHandSeq'];
+                ld_introSoundHandSeq(param);
             case 5
-                param.task = ['Training - Phase 1 - ', sessionName];
+                param.task = [exp_phase, '_trainingPhase1'];
                 ld_mslTraining(param, 1);
             case 6
-                param.task = ['Training - Phase 2 - ', sessionName];
+                param.task = [exp_phase, '_trainingPhase2'];
                 ld_mslTraining(param, 2);
             case 7
-                param.task = ['Training - Phase 3 - ', sessionName];
+                param.task = [exp_phase, '_trainingPhase3'];
                 ld_mslTraining(param, 3);
             case 8 
-                param.task = ['Test - ', sessionName];
+                param.task = [exp_phase, '_test'];
                 ld_mslTraining(param, 0, true);
             case 9
                 break;

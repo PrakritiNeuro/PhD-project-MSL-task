@@ -1,9 +1,9 @@
-function [returnCode] = ld_intro(param)
+function [returnCode] = ld_introSeq(param)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% returnCode = en_intro(param)
+% returnCode = ld_introSeq(param)
 %
-% introduction to the sequence. Exiting after x successful sequences in a
-% row
+% Introduction of the sequence(s).
+% Exiting after x successful sequences in a row
 %
 % param:            structure containing parameters (see en_parameters.m)
 % returnCode:       error returned
@@ -12,8 +12,9 @@ function [returnCode] = ld_intro(param)
 % Vo An Nguyen 2010/10/07
 % Arnaud Bore 2012/10/05, CRIUGM - arnaud.bore@gmail.com
 % Arnaud Bore 2014/10/31 
-% EG March 9, 2015 
+% Ella Gabitov, March 9, 2015 
 % Arnaud Bore 2016/05/27
+% Ella Gabitov, October 2022
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % CREATION OF THE WINDOW
@@ -24,33 +25,37 @@ show_hand_duration  = 3; % in seconds
 show_instruction_duration = 3; % in seconds
 red_cross_duration = 3; % in seconds
 
+% randomize the order of the sequences
+rnd_inds = randsample(1:numel(param.soundHandSeq), numel(param.soundHandSeq));
 
-% % Get information about the task
-% l_seqUsed = param.seqA;
-
-NbSeqOK = 0;
 logoriginal = [];
 quit = false;
 
 timeStartExperience = GetSecs;
 
-% Display instruction message
+% font settings
 Screen('TextFont', window, 'Arial');
 Screen('TextSize', window, param.textSize); 
+
+% colors for display
 gold = [255, 215, 0, 255];
 black = [0, 0, 0, 255];
+white = [255, 255, 255, 255];
 
 % Pre-experiment text
-DrawFormattedText(window,'PERFORM THE SEQUENCES SLOWLY','center',100,gold);
-DrawFormattedText(window,'AND WITHOUT ANY ERRORS:','center',200,gold);
-DrawFormattedText(window,'... Are you ready to continue? ...','center',600,gold);
+DrawFormattedText(window,'You will be presented with two sequences, one for each hand','center',100,gold);
+DrawFormattedText(window,'You will need to perform each sequence repeatedly in a comfortable pace as accurately as possible','center',200,gold);
+DrawFormattedText(window,'Please, stay still when you see the RED cross','center',300,gold);
+DrawFormattedText(window,'Perform the sequence only when you see the GREEN cross and the sequence','center',400,gold);
+DrawFormattedText(window,'If you make an error, just start the sequence from its first key','center',500,gold);
+DrawFormattedText(window,'... GET READY FOR THE TASK ...','center',1000,gold);
 Screen('Flip', window);
 
 % Wait for TTL (or keyboard input) before starting
 % FlushEvents('keyDown');
 [~, ~, keyCode] = KbCheck(-1);
 strDecoded = ld_convertKeyCode(keyCode, param.keyboard);
-while isempty(strfind(strDecoded, '5'))
+while ~any(contains(strDecoded, '5'))
     [~, ~, keyCode] = KbCheck(-1);
     strDecoded = ld_convertKeyCode(keyCode, param.keyboard);
 end
@@ -61,12 +66,9 @@ logoriginal{length(logoriginal)}{2} = param.task;
 logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
 logoriginal{end}{2} = 'START';
 
-learning_sequence_a_or_b = [1;2];
-learning_sequence_a_or_b = learning_sequence_a_or_b(...
-    randperm(numel(learning_sequence_a_or_b)));
 
-% LOOP: Learning sequences
-for i = 1:numel(learning_sequence_a_or_b)
+% LOOP: sequences
+for i = 1:numel(rnd_inds)
     if quit
         logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
         logoriginal{end}{2} = 'STOP MANUALLY';
@@ -84,44 +86,32 @@ for i = 1:numel(learning_sequence_a_or_b)
         return;
     end
 
-    if learning_sequence_a_or_b(i) == 1
-        l_seqUsed = param.seqA;
-        LeftOrRightHand = param.HandSoundSequenceAssociation.seqA.hand;
-    elseif learning_sequence_a_or_b(i) == 2
-        l_seqUsed = param.seqB;
-        LeftOrRightHand = param.HandSoundSequenceAssociation.seqB.hand;
+    seq = param.soundHandSeq(rnd_inds(i)).seq;
+    hand = param.soundHandSeq(rnd_inds(i)).hand;
+    map_keys = param.(['map_' hand]);
+    ^^^
+    % replace param.keyboard_key_to_task_element 
+    % by map_keys in the code below
+
+    switch hand
+        case 'left'
+            [img, ~, ~] = imread(fullfile(param.main_dpath, 'stimuli', 'left-hand_with-numbers.png'));
+        case 'right'
+            [img, ~, ~] = imread(fullfile(param.main_dpath, 'stimuli', 'right-hand_with-numbers.png'));
     end
+    img_height = size(img,1);
+    img_width = size(img,2);
+    img_position = [round(screen_width/2 - img_width - 50) ...
+        round(screen_height/2 - img_height/2) ...
+        round(screen_width/2 - 50) ...
+        round(screen_height/2 + img_height/2)...
+        ];
 
-    screen_width = param.screenResolution(1);
-    screen_height = param.screenResolution(2);
-    if strcmp(LeftOrRightHand, 'left_hand')
-        [image_hand, ~, alpha] = imread([param.rawDir 'stimuli' filesep 'left-hand_with-numbers.png']); % Left Hand
-        image_height = size(image_hand,1);
-        image_width = size(image_hand,2);
-        param.keyboard_key_to_task_element = param.left_hand_keyboard_key_to_task_element;
-        hand_position = [round(screen_width/2 - image_width - 50) ...
-            round(screen_height/2 - image_height/2) ...
-            round(screen_width/2 - 50) ...
-            round(screen_height/2 + image_height/2)...
-            ];
+    texture_hand = Screen('MakeTexture', window, img);
 
-    elseif strcmp(LeftOrRightHand, 'right_hand')
-        [image_hand, ~, alpha] = imread([param.rawDir 'stimuli' filesep 'right-hand_with-numbers.png']); % Right Hand
-        image_height = size(image_hand,1);
-        image_width = size(image_hand,2);
-        param.keyboard_key_to_task_element = param.right_hand_keyboard_key_to_task_element;
-        hand_position = [round(screen_width/2 + 50) ...
-            round(screen_height/2 - image_height/2) ...
-            round(screen_width/2 + image_width + 50) ...
-            round(screen_height/2 + image_height/2)...
-            ];
-    end
-
-    texture_hand = Screen('MakeTexture', window, image_hand);
-
-    Screen('DrawTexture',window,texture_hand,[],hand_position);
+    Screen('DrawTexture',window,texture_hand,[],img_position);
     Screen('TextSize', window, param.crossSize);
-    DrawFormattedText(window, '+', 'center', 'center', param.white);
+    DrawFormattedText(window, '+', 'center', 'center', white);
     Screen('TextSize', window, param.textSize);
     Screen('Flip', window);
     
@@ -133,7 +123,7 @@ for i = 1:numel(learning_sequence_a_or_b)
     Screen('TextSize', window, param.textSize);
     DrawFormattedText(window,'PERFORM THE SEQUENCE SLOWLY','center',100,gold);
     DrawFormattedText(window,'AND WITHOUT ANY ERRORS:','center',200,gold);
-    DrawFormattedText(window,num2str(l_seqUsed),'center',300,gold);
+    DrawFormattedText(window,num2str(seq),'center',300,gold);
     Screen('Flip', window);
     pause(show_instruction_duration)
     
@@ -164,7 +154,7 @@ for i = 1:numel(learning_sequence_a_or_b)
         % Testing number of good sequences entered
         logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
         logoriginal{end}{2} = 'Practice';
-        logoriginal{end}{3} = LeftOrRightHand;
+        logoriginal{end}{3} = hand;
         NbSeqOK = 0;
         while (NbSeqOK < param.nbSeqIntro)
     
@@ -175,7 +165,7 @@ for i = 1:numel(learning_sequence_a_or_b)
             while seqOK == 0
                 [quit, key, timePressed] = displayCross(...
                     window, param, 0,1,0,'green', 100, ...
-                    true, l_seqUsed);
+                    true, seq);
                     if quit
                         logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
                         logoriginal{end}{2} = 'STOP MANUALLY';
@@ -216,8 +206,8 @@ for i = 1:numel(learning_sequence_a_or_b)
     
                 index = index + 1;
                 keyTmp(index) = key;
-                if index >= length(l_seqUsed)
-                    if keyTmp == l_seqUsed
+                if index >= length(seq)
+                    if keyTmp == seq
                         seqOK = 1;
                         NbSeqOK = NbSeqOK + 1;
                     else

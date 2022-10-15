@@ -1,0 +1,65 @@
+
+PSYCHTOOLBOX TIPS
+------------------
+Can use KbCheck & KbWait to determine whether any key is down now.
+
+Pass a list of keycodes to be ignored by KbCheck and KbWait.
+See "help DisableKeysForKbCheck" on how to do this.
+
+---
+
+Add a ListenChar(2) command at the beginning of your script and 
+a ListenChar(0) to the end of your script to disable/enable transmission of 
+keypresses to Matlab.
+
+If your script should abort and your keyboard is dead,
+press CTRL+C to reenable keyboard input
+It is the same as ListenChar(0). See 'help ListenChar' for more info.
+
+---
+
+ 'deviceNumber'
+	-1, KbCheck will query all keyboard devices and
+	return their "merged state" - The 'keyCode' vector will represent
+	the state of all keys of all keyboards, and the 'keyIsDown' flag will be
+	equal to one if at least one key on any of the keyboards is pressed.
+	
+	-2, KbCheck will query all keypad devices (if any) and
+	return their "merged state", 
+	
+	-3, KbCheck will query all keyboard and keypad devices and
+	return their "merged state".
+
+
+---
+
+
+Adjust volume
+
+
+
+
+
+
+Quit:
+	Check that it is consistnenly implemented in all experimental sessions
+	Make sure to save all the information
+	To do so, write a function that is called every time the 'escape' key is detected
+
+return error???
+
+
+---
+
+Make a function for preloading the sound
+Don't play the sound automatically
+
+
+The quality of the images
+
+Instructions
+
+
+
+
+

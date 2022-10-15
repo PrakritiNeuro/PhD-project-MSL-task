@@ -1,6 +1,6 @@
-function [returnCode] = ld_sound_sequence_association(param)
+function [returnCode] = ld_introSoundHandSeq(param)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% returnCode = ld_sound_sequence_association(param)
+% returnCode = ld_introSoundHandSeq(param)
 %
 % explained later
 %
@@ -9,29 +9,30 @@ function [returnCode] = ld_sound_sequence_association(param)
 %
 %
 % Thibault Vlieghe, 2022-08-03
+% Ella Gabitov, October 2022
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % CREATION OF THE WINDOW, initializing experiment
 [window, param.screenResolution] = createWindow(param);
 
-number_channels = param.number_channels;
+n_channels = numel(param.sounds); % one channel for each sound
 
 % initializes sound driver...the 1 pushes for low latency
 InitializePsychSound(1);
 % opens sound buffer
-pahandle = PsychPortAudio('Open', [], [], number_channels, []);
+pahandle = PsychPortAudio('Open', [], [], n_channels, []);
 
 % play blank extremely low sound to avoid problem of first sound command not being played
 pause(.1)
-[audio_signal_tmp, frequency_tmp] = audioread(['stimuli\' 'no_sound.wav']);
-audio_signal_tmp = repmat(audio_signal_tmp, number_channels);
+[audio_signal_tmp, ~] = audioread(['stimuli\' 'no_sound.wav']);
+audio_signal_tmp = repmat(audio_signal_tmp, n_channels);
 PsychPortAudio('FillBuffer', pahandle, audio_signal_tmp');
 PsychPortAudio('Start', pahandle, 1,0);
 PsychPortAudio('Stop', pahandle, 1);
 
 pause(.1)
 
-onset = struct(...                              % onset vector         
+onset = struct(...     
     'rest',     [], ...
     'seq',      [], ...
     'seqDur',   [] ...
@@ -43,9 +44,11 @@ sound_hand_delay = 2 ; % in seconds
 show_hand_duration  = 3; % in seconds
 red_cross_duration = 3; % in seconds
 
+% randomize the order of the sequences
+rnd_inds = randsample(1:numel(param.soundHandSeq), numel(param.soundHandSeq));
+
 logoriginal = [];
-duration = 0;
-standard = 0;
+quit = false;
 
 % load sound volume adjustment in dB
 i_name = 1;
@@ -79,7 +82,7 @@ for index_sound = 1:length(param.sounds)
     system(command);
     [audio_signal{index_sound},  frequency{index_sound}] = ...
         audioread(tmp_sound);
-    audio_signal{index_sound} = repmat(audio_signal{index_sound}, number_channels);
+    audio_signal{index_sound} = repmat(audio_signal{index_sound}, n_channels);
 end
 
 % Display first instruction
@@ -90,15 +93,14 @@ white = [255, 255, 255, 255];
 
 DrawFormattedText(window,'ASSOCIATE THE SEQUENCE','center',100,gold);
 DrawFormattedText(window,'WITH THE SOUND','center',200,gold);
-DrawFormattedText(window,'... The task will begin momentarily ...','center',300,gold); %%
+DrawFormattedText(window,'... Get ready to start the task ...','center',300,gold);
 Screen('Flip', window);
-
 
 % Wait for TTL (or keyboard input) before starting
 % FlushEvents('keyDown');
 [~, ~, keyCode] = KbCheck(-1);
 strDecoded = ld_convertKeyCode(keyCode, param.keyboard);
-while isempty(strfind(strDecoded, '5'))
+while ~contains(strDecoded, '5')
     [~, ~, keyCode] = KbCheck(-1);
     strDecoded = ld_convertKeyCode(keyCode, param.keyboard);
 end
@@ -111,54 +113,39 @@ logoriginal{end}{2} = param.task;
 logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
 logoriginal{end}{2} = 'START';
 
-% Randomization: starting with left or right
-learning_sequence_a_or_b = [1;2];
-learning_sequence_a_or_b = learning_sequence_a_or_b(...
-    randperm(numel(learning_sequence_a_or_b)));
-quit = false;
-
 % LOOP: Associating sequence with sound
-for i = 1:numel(learning_sequence_a_or_b)
+for i = 1:numel(rnd_inds)
+    sound_fname = param.soundHandSeq(rnd_inds(i)).sound;
+    hand = param.soundHandSeq(rnd_inds(i)).hand;
+    seq = param.soundHandSeq(rnd_inds(i)).seq;
+    map_keys = param.(['map_' hand]);
+    ^^^
+    % replace param.keyboard_key_to_task_element 
+    % by map_keys in the code below
 
-    %%% PRELOAD
-    if learning_sequence_a_or_b(i) == 1
-        l_seqUsed = param.seqA;
-        LeftOrRightHand = param.HandSoundSequenceAssociation.seqA.hand;
-        tmp_sound = param.HandSoundSequenceAssociation.seqA.sound;
-    elseif learning_sequence_a_or_b(i) == 2
-        l_seqUsed = param.seqB;
-        LeftOrRightHand = param.HandSoundSequenceAssociation.seqB.hand;
-        tmp_sound = param.HandSoundSequenceAssociation.seqB.sound;
+    switch hand
+        case 'left'
+            [img, ~, ~] = imread(fullfile(param.main_dpath, 'stimuli', 'left-hand_with-numbers.png'));
+        case 'right'
+            [img, ~, ~] = imread(fullfile(param.main_dpath, 'stimuli', 'right-hand_with-numbers.png'));
     end
+    img_height = size(img,1);
+    img_width = size(img,2);
+    img_position = [round(screen_width/2 - img_width - 50) ...
+        round(screen_height/2 - img_height/2) ...
+        round(screen_width/2 - 50) ...
+        round(screen_height/2 + img_height/2)...
+        ];
 
-    index_sound = find(strcmp(param.sounds, tmp_sound));
+    index_sound = find(strcmp(param.sounds, sound_fname));
     PsychPortAudio('FillBuffer', pahandle, audio_signal{index_sound}')
 
     screen_width = param.screenResolution(1);
     screen_height = param.screenResolution(2);
-    if strcmp(LeftOrRightHand, 'left_hand')
-            [image_hand, ~, alpha] = imread([param.rawDir 'stimuli' filesep 'left-hand_with-numbers.png']); % Left Hand
-            image_height = size(image_hand,1);
-            image_width = size(image_hand,2);
-            param.keyboard_key_to_task_element = param.left_hand_keyboard_key_to_task_element;
-            hand_position = [round(screen_width/2 - image_width - 50) ...
-                round(screen_height/2 - image_height/2) ...
-                round(screen_width/2 - 50) ...
-                round(screen_height/2 + image_height/2)...
-                ];
-
-        elseif strcmp(LeftOrRightHand, 'right_hand')
-            [image_hand, ~, alpha] = imread([param.rawDir 'stimuli' filesep 'right-hand_with-numbers.png']); % Right Hand
-            image_height = size(image_hand,1);
-            image_width = size(image_hand,2);
-            param.keyboard_key_to_task_element = param.right_hand_keyboard_key_to_task_element;
-            hand_position = [round(screen_width/2 + 50) ...
-                round(screen_height/2 - image_height/2) ...
-                round(screen_width/2 + image_width + 50) ...
-                round(screen_height/2 + image_height/2)...
-                ];
-        end
     
+    ^^^
+    % subject_has_completed_introNb_sequences
+    % make this check more efficient
     subject_has_completed_introNb_sequences = false;
     while ~subject_has_completed_introNb_sequences && ~quit
         % display white cross for 200ms
@@ -183,8 +170,8 @@ for i = 1:numel(learning_sequence_a_or_b)
         pause(sound_hand_delay)
 
         % Show hand that will be used
-        texture_hand = Screen('MakeTexture', window, image_hand);
-        Screen('DrawTexture',window,texture_hand,[],hand_position);
+        texture_hand = Screen('MakeTexture', window, img);
+        Screen('DrawTexture',window,texture_hand,[],img_position);
         DrawFormattedText(window, '+', 'center', 'center', white);
         Screen('Flip', window);
         pause(show_hand_duration)
@@ -197,7 +184,7 @@ for i = 1:numel(learning_sequence_a_or_b)
                                             0, 0, 'red');
         if quit
             logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
-            logoriginal{end}{2} = 'STOP MANUALLY';
+            logoriginal{end}{2} = 'STOPED MANUALLY';
             savefile(param,logoriginal,onset);
             Screen('CloseAll');
             PsychPortAudio('Close', pahandle);
@@ -211,17 +198,16 @@ for i = 1:numel(learning_sequence_a_or_b)
 
             [quit, keysPressed, timePressed] = displayCross(...
                 window, param, ...
-                0,param.nbSeqPerMiniBlock*length(l_seqUsed),...
-                0,'green', param.durNoResponse, true, l_seqUsed);
+                0,param.nbSeqPerMiniBlock*length(seq),...
+                0,'green', param.durNoResponse, true, seq);
             
-    
             [keys_as_sequence_element,  keys_source_keyboard_value] = ...
                 ld_convertMultipleKeys(keysPressed, param.keyboard, ...
                 param.keyboard_key_to_task_element);
     
             % Find Good sequences
             str_keys = num2str(keys_as_sequence_element);
-            str_l_seqUsed = num2str(l_seqUsed);
+            str_l_seqUsed = num2str(seq);
     
             % Display good sequences and total time
             disp([num2str(size(strfind(str_keys,str_l_seqUsed),2)) ' good sequences']);
@@ -237,7 +223,7 @@ for i = 1:numel(learning_sequence_a_or_b)
 
             if quit
                 logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
-                logoriginal{end}{2} = 'STOP MANUALLY';
+                logoriginal{end}{2} = 'STOPED MANUALLY';
                 savefile(param,logoriginal,onset);
                 Screen('CloseAll');
                 PsychPortAudio('Close', pahandle);
@@ -254,7 +240,7 @@ for i = 1:numel(learning_sequence_a_or_b)
                                             0, 0, 'red');
         if quit
             logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
-            logoriginal{end}{2} = 'STOP MANUALLY';
+            logoriginal{end}{2} = 'STOPED MANUALLY';
             savefile(param,logoriginal,onset);
             Screen('CloseAll');
             PsychPortAudio('Close', pahandle);
@@ -287,7 +273,7 @@ for i = 1:numel(learning_sequence_a_or_b)
                                         0, 0, 'red');
     if quit
         logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
-        logoriginal{end}{2} = 'STOP MANUALLY';
+        logoriginal{end}{2} = 'STOPED MANUALLY';
         savefile(param,logoriginal,onset);
         Screen('CloseAll');
         PsychPortAudio('Close', pahandle);
@@ -299,3 +285,7 @@ savefile(param,logoriginal,onset);
 Screen('CloseAll');
 PsychPortAudio('Close', pahandle);
 % Save file.mat
+
+returnCode = 0;
+
+end

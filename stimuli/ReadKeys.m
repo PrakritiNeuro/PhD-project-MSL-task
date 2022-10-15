@@ -1,72 +1,79 @@
-function [quit, keysPressed, timePressed] = ReadKeys(...
-    currentKeyboard, ...
+ function [quit, keysPressed, timePressed] = readKeys(...
     timeStartReading, ...
     duration, ...
     nbKeys, ...
-    accept_ttl, ...
-    wait_max)
+    acceptTtl, ...
+    waitMax)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% [quit, keysPressed, timePressed] = ReadKeys(timeStartReading ,duration, nbKeys);
+% [quit, keysPressed, timePressed] = ReadKeys(currentKeyboard,
+% timeStartReading ,duration, nbKeys, acceptTtl, waitMax);
 %
 % Record keys that have been pressed for a period of time. Reading at keys
 % using KbCheck of the Psychtoolbox. (ESC to quit)
 %
-% INPUT:
+% INPUT
 %   timeStartReading
-%   duration:       duration in sec before exiting (0 = no duration)
-%   nbKeys:         number of keysPressed pressed before exiting (0 = unlimited)
+%   duration            duration, in sec, before exiting; default - unlimited
+%   nbKeys              number of keysPresses to press before exiting; default - unlimited
+%   acceptTtl           0 - the value of TTL (='5') is not accepted 
+%   waitMax             the maximum time to wait without any key pressed;default - unlimited
 %
-% OUTPUT:
-%   quit:           exited before the end (ESC)? (0: no   1:yes)
-%   keysPressed:    vector containing all the keysPressed pressed
-%   timePressed:    vector containing the time when the keysPressed were pressed
+% OUTPUT
+%   quit            boolean     exited before the end (ESC)? (0: no; 1: yes)
+%   keysPressed     {string}    a cell array containing all the key names that were pressed
+%   timePressed     [int]       a vector containing the time when the keysPressed were pressed
 %
 % Vo An Nguyen 2007/04/24
+% Ella Gabitov, October 2022
 %
-% 2008/02/14:   Add "previous" input parameter
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 6, wait_max = 3600; end % Check if a subject keeps pressing button
-if nargin < 5, accept_ttl = 0; end % If we need the 5 to answer question
-if duration == 0, duration = 3600; end % Duration of ReadKey
-if nbKeys == 0 
-    nbKeys = 3600; 
+% is used to check if the participant keeps pressing the buttons
+if nargin < 6, waitMax = Inf; end
+
+% 0 - discard the TTL input (='5'), 1 - otherwise
+if nargin < 5, acceptTtl = 0; end 
+
+% limits the number of keys to complete the task
+if nargin < 4 || nbKeys == 0 || isempty(nbKeys) || isnan(nbKeys)
+    nbKeys = Inf;
 end
-last_event = timeStartReading;
+
+% limits the duration of the task
+if nargin < 3 || duration == 0 || isempty(duration) || isnan(duration)
+    duration = Inf;
+end
+
+timeStartPrevious = timeStartReading;
+keyCodePressedPrevious = zeros(1, 256);
+index = 1;
+
 quit = 0;
-keysPressed = [];
+keysPressed = {};
 timePressed = [];
 
-    index = 1;
-    KeysWereDown = ones(1,256);
-    
-    while (index <= nbKeys) && ...
-        (GetSecs-timeStartReading < duration) && ...
-        (quit == 0) && ...
-        (wait_max > GetSecs - last_event)
+while ~quit && ...
+        (index <= nbKeys) && ...
+        ((GetSecs - timeStartReading) < duration) && ...
+        ((GetSecs - timeStartPrevious) < waitMax)
 
-        [keyIsDown, secs, keyCode] = KbCheck(-1);
+    [~, secs, keyCode, ~] = KbCheck(-3);
+    keyCodePressed = keyCode & ~keyCodePressedPrevious;
 
-        KeysPressed  = (keyCode==1) & (KeysWereDown==0);
-
-        if ~isempty(find(KeysPressed))
-            strDecoded = ld_convertKeyCode(keyCode, currentKeyboard);
-            if contains(strDecoded, 'ESC') || contains(strDecoded, 'esc') || contains(strDecoded, 'Escape') % ESC6
-                quit=1;
-            elseif ~isempty(strfind(strDecoded, '5')) && ~accept_ttl
-                 % Do not record (TTL)
-            elseif ~isempty(strfind(strDecoded, 'F'))
-                 % Do not record (F)
-            else
-                tmpKeys = find(KeysPressed);
-                for i=1:length(tmpKeys)
-                    timePressed(index) = secs;
-                    keysPressed(index) = tmpKeys(i);
-                    index = index + 1 ;
-                end
-                last_event = secs;
-            end
+    if any(keyCodePressed)
+        keyName = KbName(keyCodePressed);
+        if ~iscell(keyName), keyName = {keyName}; end
+        quit = any(contains(lower(keyName), 'esc'));
+        ttlKeyPressed = any(contains(keyName, '5'));
+        if ~ quit && ...
+                (~ttlKeyPressed || (ttlKeyPressed && acceptTtl)) && ...
+                ~any(contains(lower(keyName), 'f'))                         % don't accept 'f'/'F' as a valid input value
+            timePressed(end+1) = secs;
+            keysPressed(end+1:(numel(keysPressed)+numel(keyName))) = keyName;
+            timeStartPrevious = secs;
         end
-        KeysWereDown = keyCode;
     end
+    keyCodePressedPrevious = keyCode;
+end
+
 end

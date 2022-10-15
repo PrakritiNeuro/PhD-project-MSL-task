@@ -21,26 +21,26 @@ function [returnCode] = ld_mslTraining(param, phase_number, test)
 % Search for "PsychImaging"
 % Arnaud Bore 2016/02/06
 % Thibault Vlieghe 2022/08/10
+% Ella Gabitov, October 2022
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin < 3; test=false; end
-
 
 % INIT
 % CREATION OF THE WINDOW
 [window, param.screenResolution] = createWindow(param);
 
-number_channels = param.number_channels;
+n_channels = numel(param.sounds); % one channel for each sound
 
 % initializes sound driver...the 1 pushes for low latency
 InitializePsychSound(1);
 % opens sound buffer
-pahandle = PsychPortAudio('Open', [], [], number_channels, []);
+pahandle = PsychPortAudio('Open', [], [], n_channels, []);
 
 % play blank extremely low sound to avoid problem of first sound command not being played
 pause(.1)
-[audio_signal_tmp, frequency_tmp] = audioread(['stimuli\' 'no_sound.wav']);
-audio_signal_tmp = repmat(audio_signal_tmp, number_channels);
+[audio_signal_tmp, ~] = audioread(['stimuli\' 'no_sound.wav']);
+audio_signal_tmp = repmat(audio_signal_tmp, n_channels);
 PsychPortAudio('FillBuffer', pahandle, audio_signal_tmp');
 PsychPortAudio('Start', pahandle, 1,0);
 PsychPortAudio('Stop', pahandle, 1);
@@ -60,9 +60,10 @@ else
 end
 both_hands_keyboard_key_to_task_element = param.both_hands_keyboard_key_to_task_element;
 
-white = param.white;
+% colors for display
+white = [255, 255, 255, 255];
 
-onset = struct(...                              % onset vector         
+onset = struct(...
     'rest',     [], ...
     'seq',      [], ...
     'seqDur',   [] ...
@@ -108,7 +109,7 @@ for index_sound = 1:length(param.sounds)
     system(command);
     [audio_signal{index_sound}, frequency{index_sound}] = ...
         audioread(tmp_sound);
-    audio_signal{index_sound} = repmat(audio_signal{index_sound}, number_channels);
+    audio_signal{index_sound} = repmat(audio_signal{index_sound}, n_channels);
 end
 
 % Generate mini blocks
@@ -133,7 +134,7 @@ end
 
 DrawFormattedText(window,'PERFORM THE SEQUENCE AS FAST','center',100,gold);
 DrawFormattedText(window,'AND ACCURATE AS POSSIBLE','center',200,gold);
-DrawFormattedText(window,'... The task will begin momentarily ...','center',500,gold); %%
+DrawFormattedText(window,'... Get ready to start the task ...','center',500,gold);
 
 Screen('Flip', window);
 
@@ -141,7 +142,7 @@ Screen('Flip', window);
 [quit, ~, keyCode] = KbCheck(-1);
 strDecoded = ld_convertKeyCode(keyCode, param.keyboard);
 
-while isempty(strfind(strDecoded, '5'))
+while ~contains(strDecoded, '5')
     [~, ~, keyCode] = KbCheck(-1);
     strDecoded = ld_convertKeyCode(keyCode, param.keyboard);
 end
@@ -163,7 +164,7 @@ onset.rest(length(onset.rest)+1) = GetSecs - timeStartExperience;
 
 if quit
     logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
-    logoriginal{end}{2} = 'STOP MANUALLY';
+    logoriginal{end}{2} = 'STOPED MANUALLY';
     Screen('CloseAll')
     PsychPortAudio('Close', pahandle);
     savefile(param,logoriginal,onset);
@@ -209,7 +210,7 @@ for i = 1:numel(sequence_a_or_b)
                                             0, 0, 'white', 100);
         if quit
             logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
-            logoriginal{end}{2} = 'STOP MANUALLY';
+            logoriginal{end}{2} = 'STOPED MANUALLY';
             Screen('CloseAll')
             PsychPortAudio('Close', pahandle);
             savefile(param,logoriginal,onset);
@@ -227,7 +228,8 @@ for i = 1:numel(sequence_a_or_b)
         screen_width = param.screenResolution(1);
         screen_height = param.screenResolution(2);
 
-        [left_image_hand, ~, left_alpha] = imread([param.rawDir 'stimuli' filesep 'left-hand_with-numbers.png']); % Left Hand
+        % LEFT HAND
+        [left_image_hand, ~, ~] = imread([param.rawDir 'stimuli' filesep 'left-hand_with-numbers.png']);
         left_image_height = size(left_image_hand,1);
         left_image_width = size(left_image_hand,2);
         left_hand_position = [round(screen_width/2 - left_image_width - 50) ...
@@ -236,7 +238,8 @@ for i = 1:numel(sequence_a_or_b)
                         round(screen_height/2 + left_image_height/2)...
                         ];
 
-        [right_image_hand, ~, right_alpha] = imread([param.rawDir 'stimuli' filesep 'right-hand_with-numbers.png']); % Right Hand
+        % RIGHT HAND
+        [right_image_hand, ~, ~] = imread([param.rawDir 'stimuli' filesep 'right-hand_with-numbers.png']);
         right_image_height = size(right_image_hand,1);
         right_image_width = size(right_image_hand,2);
         right_hand_position = [round(screen_width/2 + 50) ...
@@ -256,11 +259,11 @@ for i = 1:numel(sequence_a_or_b)
         left_hand_key = 0;
         right_hand_key = 0;
         timeStartReading = GetSecs;
-        [quit, key, timePressed] = ReadKeys(param.keyboard, timeStartReading, ...
+        [quit, key, ~] = readKeys(timeStartReading, ...
                                            durNoResponse, 1, 0, 100);
         if quit
             logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
-            logoriginal{end}{2} = 'STOP MANUALLY';
+            logoriginal{end}{2} = 'STOPED MANUALLY';
             Screen('CloseAll')
             PsychPortAudio('Close', pahandle);
             savefile(param,logoriginal,onset);
@@ -325,7 +328,7 @@ for i = 1:numel(sequence_a_or_b)
 
     if quit
         logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
-        logoriginal{end}{2} = 'STOP MANUALLY';
+        logoriginal{end}{2} = 'STOPED MANUALLY';
         Screen('CloseAll')
         PsychPortAudio('Close', pahandle);
         savefile(param,logoriginal,onset);
@@ -374,7 +377,7 @@ for i = 1:numel(sequence_a_or_b)
 
     if quit
         logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
-        logoriginal{end}{2} = 'STOP MANUALLY';
+        logoriginal{end}{2} = 'STOPED MANUALLY';
         Screen('CloseAll')
         PsychPortAudio('Close', pahandle);
         savefile(param,logoriginal,onset);
@@ -396,7 +399,7 @@ for i = 1:numel(sequence_a_or_b)
 
     if quit
         logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);
-        logoriginal{end}{2} = 'STOP MANUALLY';
+        logoriginal{end}{2} = 'STOPED MANUALLY';
         Screen('CloseAll')
         PsychPortAudio('Close', pahandle);
         savefile(param,logoriginal,onset);

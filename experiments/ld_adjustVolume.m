@@ -1,41 +1,72 @@
-function [returnCode] = ld_adjustVolume(param)
+function [errorCode] = ld_adjustVolume(param)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% returnCode = ld_adjustVolume(param)
+% errorCode = ld_adjustVolume(param)
 %
-% Adjusting volume for all sounds
+% Adjust volume for each sound
 %
-% param:            structure containing parameters (see parameters.m)
-% returnCode:       error returned
+% INPUT
+%   param       structure containing parameters (see get_param....m)
+% 
+% OUTPUT
+%   errorCode   error code returned; 0 - no error
 %
+% Ella Gabitov, October 2022
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% INIT
-% CREATION OF THE WINDOW
+% Disable transmission of keypresses to Matlab
+% To reenable keyboard input to Matlab, press CTRL+C
+% This is the same as ListenChar(0)
+ListenChar(2);
+
+% set key names to the common naming scheme
+KbName('UnifyKeyNames');
+
+%% INITIALIZE SOUND DRIVER & PRELOAD SOUNDS
+
+% Running on PTB-3? Abort otherwise.
+AssertOpenGL;
+
+nrchannels = 2;     % 2 channels for stereo output
+device = [];        % default sound device 
+
+% Perform basic initialization of the sound driver
+InitializePsychSound;
+
+% Open the audio 'device' with default mode [] (== Only playback),
+% and a required latencyclass of 1 == standard low-latency mode, as well as
+% default playback frequency and 'nrchannels' sound output channels.
+% This returns a handle 'pahandle' to the audio device
+pahandle = PsychPortAudio('Open', device, [], 1, [], nrchannels);
+
+% Get the full paths to the sound files
+% The order is the same as in soundHandSeq
+wav_fpaths = cell(1, numel(param.soundHandSeq));
+for i_sound = 1:numel(param.soundHandSeq)
+    wav_fpaths{i_sound} = fullfile(param.main_dpath, 'stimuli', param.soundHandSeq(i_sound).sound);
+end
+
+% Read all sound files, create & fill one dynamic audiobuffer for
+% each read soundfile
+buffer = [];
+for i_sound=1:length(wav_fpaths)
+    [audiodata, ~] = psychwavread(char(wav_fpaths(i_sound)));
+    [~, ninchannels] = size(audiodata);
+    audiodata = repmat(transpose(audiodata), nrchannels / ninchannels, 1);
+    buffer(end+1) = PsychPortAudio('CreateBuffer', [], audiodata);
+end
+
+%% 
+
 window = createWindow(param);
 
-number_channels = param.number_channels;
-
-% initializes sound driver...the 1 pushes for low latency
-InitializePsychSound(1);
-% opens sound buffer
-pahandle = PsychPortAudio('Open', [], [], number_channels, []);
-
-% play blank extremely low sound to avoid problem of first sound command not being played
-pause(.1)
-[audio_signal_tmp, frequency_tmp] = audioread(['stimuli\' 'no_sound.wav']);
-audio_signal_tmp = repmat(audio_signal_tmp, number_channels);
-PsychPortAudio('FillBuffer', pahandle, audio_signal_tmp');
-PsychPortAudio('Start', pahandle, 1,0);
-PsychPortAudio('Stop', pahandle, 1);
-pause(.1)
-
-% Display instruction message
+% text font settings
 Screen('TextFont', window, 'Arial');
 Screen('TextSize', window, param.textSize);
 gold = [255, 215, 0, 255];
-keySet = {1, 2, 3, 4, 7, 8, 9, 0};
-valueSet = {4, 3, 2, 1, 1, 2, 3, 4};
+
+%% DELETE???
+
 hand_keyboard_key_to_task_element = containers.Map(keySet,valueSet);
 
 sound_adjustment = zeros(length(param.sounds),1);
@@ -46,116 +77,221 @@ sound_adjustment_explicit = containers.Map(keySet,valueSet);
 % more explicit, for human readability purposes. So people can be certain
 % if they look at the data in the future
 
-% Show instructions
-for index_sound = 1:length(param.sounds)
-    volume_adjustment_in_dB = 0;
-    sound_i = param.sounds{index_sound};
-    % Preload the sound
-    sound_i_fullpath = ['stimuli\' sound_i];
-    [y, Fs] = audioread(sound_i_fullpath);
-    y = repmat(y, number_channels);
-    % loads data into buffer
-    PsychPortAudio('FillBuffer', pahandle, y');
-    output_sound = ['sound' num2str(index_sound) '.wav'];
-    output_sound_fullpath = ['stimuli\' output_sound];
-    copyfile(sound_i_fullpath, output_sound_fullpath)
+
+%% GENERAL INSTRUCTIONS
+
+% Fingers & corresponding keys
+index = 1;
+middle = 2;
+little = 4;
+keySet_left = param.map_left.keys;
+keySet_right = param.map_right.keys;
+
+keyPlay = {...
+    keySet_left{cell2mat(param.map_left.values) == index}, ...
+    keySet_right{cell2mat(param.map_right.values) == index}...
+    };
+keyInc = keySet_right(cell2mat(param.map_right.values) == middle);
+keyDec = keySet_left(cell2mat(param.map_left.values) == middle);
+keyNext = {...
+    keySet_left{cell2mat(param.map_left.values) == little}, ...
+    keySet_right{cell2mat(param.map_right.values) == little}...
+    };
+
+% Wait for release of all keys on keyboard
+KbReleaseWait;
+
+DrawFormattedText(window,'ADJUST THE VOLUME','center',100,gold);
+DrawFormattedText(window,'To play the sound, use the index finger of either hand','center',300,gold);
+DrawFormattedText(window,'To increase the volume, use the middle finger of your right hand','center',400,gold);
+DrawFormattedText(window,'To decrease the volume, use the middle finger of your left hand','center',500,gold);
+DrawFormattedText(window,'TO go to the next sound, use the little finger of either hand','center',600,gold);
+DrawFormattedText(window,'... GET READY FOR THE TASK ...','center',1000,gold);
+Screen('Flip', window);
+
+% Wait for TTL or keyboard input to start the task
+[quit, ~] = wait4ttl();
+if quit
+    errorCode = save_and_close();
+    return;
+end
+
+%% ADJUST THE VOLUME
+
+% DO YOU NEED TO COPY THE FILE?
+% IS IT POSSIBLE TO SET VOLUME LEVELS VIA BUFFER OR YOU NEED A TEMP FILE?
+
+% Change in volume levels per keypress, in dB
+dbPerKeyPress = 5;
+
+for i_sound = 1:length(buffer)
+    % Change the volume of the sound, in dB, relative to the initial volume
+    % levels of the sound; negative values indicate lower volume
+    % The change is done in steps of +/-5 dB
+    adjust_by = 0;
+
+    % Wait for release of all keys on keyboard
+    KbReleaseWait;
 
     % display instructions
-    DrawFormattedText(window,['SOUND ' num2str(index_sound)],'center',100,gold);
-    DrawFormattedText(window,'PRESS 1 = PLAY THE SOUND','center',200,gold);
-    DrawFormattedText(window,'PRESS 2 = INCREASE THE SOUND VOLUME (+5dB)','center',300,gold);
-    DrawFormattedText(window,'PRESS 3 = DECREASE THE SOUND VOLUME (-5dB)','center',400,gold);
-    DrawFormattedText(window,'PRESS 4 = GO NEXT SOUND','center',500,gold);
+    DrawFormattedText(window,['SOUND ' num2str(i_sound)],'center',100,gold);
+    DrawFormattedText(window,'Play: index finger, either hand','center',300,gold);
+    DrawFormattedText(window,'Increase: right middle finger','center',400,gold);
+    DrawFormattedText(window,'Decrease: left middle finger','center',500,gold);
+    DrawFormattedText(window,'Next: little finger, either hand','center',600,gold);
     Screen('Flip', window);
 
-    pause(.5)
+    % Check keys
+    [~, ~, keyCode, ~] = KbCheck(-3);
+    keyName = KbName(keyCode);
+    quit = any(contains(lower(keyName), 'esc'));
+    go2next = any(contains(lower(keyName), lower(keyNext)));
 
-    % Play the sound one first time
-    PsychPortAudio('Start', pahandle, 1,0);
-    PsychPortAudio('Stop', pahandle, 1,0);
-    sound_adjusted = false;
-    while ~sound_adjusted
-        timeStartReading = GetSecs;
-        [quit, key, timeTmp] = ReadKeys(param.keyboard, timeStartReading, ...
-                                                        100, 1);
-        strDecoded = ld_convertKeyCode(key, param.keyboard);
-        key = ld_convertOneKey(strDecoded);
+    while ~quit && ~ go2next
+        
+        play_sound = any(contains(lower(keyName), lower(keyPlay)));
 
-        try
-            key = hand_keyboard_key_to_task_element(key);
-        catch ME
-            switch ME.identifier
-                case 'MATLAB:Containers:Map:NoKey'
-                    key = 'NaN';
-                case 'MATLAB:Containers:TypeMismatch'
-                    key = 'NaN';
-                otherwise
-                    ME.identifier
-                    rethrow(ME)
-            end
+        % Increase the volume
+        if any(contains(lower(keyName), lower(keyInc)))
+            adjust_by = adjust_by + dbPerKeyPress;
+            play_sound = true; 
+        % Decrease the volume   
+        elseif any(contains(lower(keyName), lower(keyDec)))
+            adjust_by = adjust_by + dbPerKeyPress;
+            play_sound = true;
         end
-        disp(key)
-        if key == 1
-            [y, Fs] = audioread(output_sound_fullpath);
-            y = repmat(y,number_channels);
 
-            PsychPortAudio('FillBuffer', pahandle, y');
-            PsychPortAudio('Start', pahandle, 1,0);
-            PsychPortAudio('Stop', pahandle, 1);
-        elseif key == 2
-            if volume_adjustment_in_dB < 0
-                volume_adjustment_in_dB = volume_adjustment_in_dB + 5;
-            end
-            command = horzcat('ffmpeg -loglevel quiet -y -i ', ...
-                sound_i_fullpath,...
-                ' -filter:a "volume=', num2str(volume_adjustment_in_dB), 'dB" ', ...
-                output_sound_fullpath, ' -nostdin');
-            disp(command)
-            system(command);
-            [y, Fs] = audioread(output_sound_fullpath);
-            y = repmat(y,number_channels);
-            PsychPortAudio('FillBuffer', pahandle, y');
-            PsychPortAudio('Start', pahandle, 1,0);
-            PsychPortAudio('Stop', pahandle, 1);
-        elseif key == 3
-            volume_adjustment_in_dB = volume_adjustment_in_dB -5;
-            command = horzcat('ffmpeg -loglevel quiet -y -i ', ...
-                sound_i_fullpath,...
-                ' -filter:a "volume=', num2str(volume_adjustment_in_dB), 'dB" ', ...
-                output_sound_fullpath, ' -nostdin');
-            disp(command)
-            system(command);
-            [y, Fs] = audioread(output_sound_fullpath);
-            y = repmat(y,number_channels);
-            PsychPortAudio('FillBuffer', pahandle, y');
-            PsychPortAudio('Start', pahandle, 1,0);
-            PsychPortAudio('Stop', pahandle, 1);
-        elseif key == 4
-            sound_adjusted = true;
-            sound_adjustment_explicit(sound_i) = ...
-                volume_adjustment_in_dB;
-            sound_adjustment(index_sound) = volume_adjustment_in_dB;
+        % change the volume using adjust_by
+        % ??? ... ???
+
+        % Play the sound
+        if play_sound
+            PsychPortAudio('FillBuffer', pahandle, buffer(i_sound));
+            PsychPortAudio('Start', pahandle, 1, 0, 1); % repetitions = 1
         end
-        if quit
-            break; 
-        end
+
+        % Check keys
+        [~, ~, keyCode, ~] = KbCheck(-3);
+        keyName = KbName(keyCode);
+        quit = any(contains(lower(keyName), 'esc'));
+        go2next = any(contains(lower(keyName), lower(keyNext)));
+
+    end
+
+    if quit
+        errorCode = save_and_close();
+        return;
     end
 
 end
 
 
-% Save file.mat
-i_name = 1;
-output_file_name = [param.outputDir, param.subject, '_', param.task, '_', ...
-                                            num2str(i_name), '.mat'];
-while exist(output_file_name, 'file')
-    i_name = i_name+1;
-    output_file_name = [param.outputDir, param.subject, '_', param.task, ...
-                                    '_' , num2str(i_name), '.mat'];
+%% DELITE WHEN DONE ...
+
+% 
+%     while ~sound_adjusted
+%         timeStartReading = GetSecs;
+%         [quit, keysPressed, ~] = readKeys(timeStartReading, Inf, 1);
+% 
+%         if contains(param.map_left.vaues, key)
+% 
+%         try
+%             key = hand_keyboard_key_to_task_element(key);
+%         catch ME
+%             switch ME.identifier
+%                 case 'MATLAB:Containers:Map:NoKey'
+%                     key = 'NaN';
+%                 case 'MATLAB:Containers:TypeMismatch'
+%                     key = 'NaN';
+%                 otherwise
+%                     ME.identifier
+%                     rethrow(ME)
+%             end
+%         end
+%         disp(key)
+%         if key == 1
+%             [y, Fs] = audioread(output_sound_fullpath);
+%             y = repmat(y,n_channels);
+% 
+%             PsychPortAudio('FillBuffer', pahandle, y');
+%             PsychPortAudio('Start', pahandle, 1,0);
+%             PsychPortAudio('Stop', pahandle, 1);
+%         elseif key == 2
+%             if volume_adjustment_in_dB < 0
+%                 volume_adjustment_in_dB = volume_adjustment_in_dB + 5;
+%             end
+%             command = horzcat('ffmpeg -loglevel quiet -y -i ', ...
+%                 sound_i_fullpath,...
+%                 ' -filter:a "volume=', num2str(volume_adjustment_in_dB), 'dB" ', ...
+%                 output_sound_fullpath, ' -nostdin');
+%             disp(command)
+%             system(command);
+%             [y, Fs] = audioread(output_sound_fullpath);
+%             y = repmat(y,n_channels);
+%             PsychPortAudio('FillBuffer', pahandle, y');
+%             PsychPortAudio('Start', pahandle, 1,0);
+%             PsychPortAudio('Stop', pahandle, 1);
+%         elseif key == 3
+%             volume_adjustment_in_dB = volume_adjustment_in_dB -5;
+%             command = horzcat('ffmpeg -loglevel quiet -y -i ', ...
+%                 sound_i_fullpath,...
+%                 ' -filter:a "volume=', num2str(volume_adjustment_in_dB), 'dB" ', ...
+%                 output_sound_fullpath, ' -nostdin');
+%             disp(command)
+%             system(command);
+%             [y, Fs] = audioread(output_sound_fullpath);
+%             y = repmat(y,n_channels);
+%             PsychPortAudio('FillBuffer', pahandle, y');
+%             PsychPortAudio('Start', pahandle, 1,0);
+%             PsychPortAudio('Stop', pahandle, 1);
+%         elseif key == 4
+%             sound_adjusted = true;
+%             sound_adjustment_explicit(sound_i) = ...
+%                 volume_adjustment_in_dB;
+%             sound_adjustment(index_sound) = volume_adjustment_in_dB;
+%         end
+%         if quit
+%             break; 
+%         end
+%     end
+% 
+%% UTILS
+
+    function errorCode = save_and_close()
+
+        % save file.mat
+        i_name = 1;
+        output_fpath = fullfile(param.outputDir, ...
+            [param.subject, '_', param.task, '_', num2str(i_name), '.mat']);
+
+        while exist(output_fpath, 'file')
+            i_name = i_name+1;
+        output_fpath = fullfile(param.outputDir, ...
+            [param.subject, '_', param.task, '_', num2str(i_name), '.mat']);
+
+        end
+        save(output_fpath, 'sound_adjustment', 'sound_adjustment_explicit');
+                
+        % Close the audio device
+        if exist(pahandle, "var")
+            % Wait until end of playback (1) then stop:
+            PsychPortAudio('Stop', pahandle, 1);
+            
+            % Delete all dynamic audio buffers
+            PsychPortAudio('DeleteBuffer');
+            
+            % Close the audio device
+            PsychPortAudio('Close', pahandle);
+        end
+
+        % Enable transmission of keypresses to Matlab
+        ListenChar(0);
+
+        % Close all screens
+        Screen('CloseAll');
+
+        errorCode = 0;
+
+    end
+
 end
-save(output_file_name, 'sound_adjustment', 'sound_adjustment_explicit');
-
-returnCode = 0;
-
-PsychPortAudio('Close', pahandle);
-Screen('CloseAll')

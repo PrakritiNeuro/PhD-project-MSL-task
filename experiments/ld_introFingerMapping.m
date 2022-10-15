@@ -1,6 +1,6 @@
-function [returnCode] = ld_verification(param)
+function [returnCode] = ld_introFingerMapping(param)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% returnCode = en_verification(param)
+% returnCode = ld_introFingerMapping(param)
 %
 % Verifying if correct button is pressed for each finger
 %
@@ -12,8 +12,9 @@ function [returnCode] = ld_verification(param)
 % Arnaud Bore 2012/10/05, CRIUGM - arnaud.bore@gmail.com
 % Arnaud Boré 2012/08/11 switch toolbox psychotoolbox 3.0
 % Arnaud Boré 2014/10/31 Modification for two handed task
-% EG March 9, 2015  
+% Ella Gabitov, March 9, 2015  
 % Arnaud Boré 2016/05/30 Stim
+% Ella Gabitov, October 2022
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % INIT
@@ -29,9 +30,9 @@ gold = [255, 215, 0, 255];
 
 % Pre-experiment text
 DrawFormattedText(window,'You will press all keys, in order, for each hand','center',100,gold);
-DrawFormattedText(window,'Index Finger = 1, Major Finger = 2','center',200,gold);
-DrawFormattedText(window,'Ring Finger = 3, Pinkie Finger = 4','center',300,gold);
-DrawFormattedText(window,'... Are you ready to start? ...','center',400,gold);
+DrawFormattedText(window,'Index Finger = 1, Middle Finger = 2','center',200,gold);
+DrawFormattedText(window,'Ring Finger = 3, Little Finger = 4','center',300,gold);
+DrawFormattedText(window,'... GET READY FOR THE TASK ...','center',1000,gold);
 Screen('Flip', window);
 
 % Wait for TTL (or keyboard input) before starting
