@@ -16,27 +16,32 @@ function ld_menuPostSleep(exp_phase, param)
     while nextMenu
         choice = menu(...
                        strcat('Menu - ', exp_phase),...
-                       'Introduction - Finger Mapping',...
+                       'Sound Volume Adjustment',...
+                       'Introduction - Key-Finger Mapping',...
                        'Introduction - Sequences', ...
                        'Introduction - Sound-Hand-Sequence',...
                        'Test', ...
                        'Quit'...
                        );
 
+        param.exp_phase = exp_phase;
         switch choice
             case 1
-                param.task = [exp_phase, '_introFingerMapping'];
-                ld_introFingerMapping(param);
+                param.task = 'soundVolAdjustment';
+                ld_adjustVolume(param);
             case 2
-                param.task = [exp_phase, '_introSeq'];
-                ld_introSeq(param);
+                param.task = 'introFingerMapping';
+                ld_introFingerMapping(param);
             case 3
-                param.task = [exp_phase, '_introSoundHandSeq'];
-                ld_introSoundHandSeq(param);
+                param.task = 'introSeq';
+                ld_introSeq(param);
             case 4
-                param.task = [exp_phase, '_test'];
-                ld_mslTraining(param, 0, true);
+                param.task = 'introSoundHandSeq';
+                ld_introSoundHandSeq(param);
             case 5
+                param.task = '_test';
+                ld_mslTraining(param, 0, true);
+            case 6
                 break;
         end
     end

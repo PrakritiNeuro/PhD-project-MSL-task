@@ -1,4 +1,4 @@
-function [quit, keysPressed, timePressed] = displayCross_arch(window, duration, nbKeys, frequency, color, size)
+function [quit, keysPressed, timePressed] = displayCrossWithSeq(window, minimal_duration, begining_experiment,TR,nbKeys, frequency, color, size)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % [quit, keysPressed, timePressed] = en_stimCross(duration, nbKeys, color,
 % size, frequence, responseBox, timeOffset)
@@ -22,12 +22,13 @@ function [quit, keysPressed, timePressed] = displayCross_arch(window, duration, 
 
 % Init
 % if nargin < 7 timeOffset = 0; end
-if nargin < 6 frequence = 0; end
-if nargin < 5 size = 100; end
-if nargin < 4 color = 'white'; end
+
+if nargin < 6 size = 100; end
+if nargin < 5 color = 'white'; end
+if nargin < 4 frequency = 0; end
 if nargin < 3 nbKeys = 0; end
-if nargin < 2 duration = 0; end
-if duration == 0 duration = 3600; end
+if nargin < 2 minimal_duration = 0; end
+if minimal_duration == 0 minimal_duration = 3600; end
 
 quit = 0;
 keysPressed = [];
@@ -57,33 +58,19 @@ if (frequency == 0)
     Screen('Flip', window);
     % Read Keyboard
     timeStartReading = GetSecs;
-%     [quit, keysPressed, timePressed] = ReadKeys(timeStartReading,duration,nbKeys);
-
-    if nbKeys == 0 
-        nbKeys = 3600; 
+    [quit, keysPressed, timePressed] = keys_read(timeStartReading,minimal_duration,nbKeys);
+%     new = GetSecs;
+%     disp(['Beginning : ' num2str(begining_experiment)])
+%     disp(['New Secs : ' num2str(new)])
+    while mod((GetSecs-begining_experiment)*100,TR*100) > TR*100+.01 || mod((GetSecs-begining_experiment)*100,TR*100) < TR*100-.01 
+%         new = GetSecs;
+%         disp(['Current secs : ' num2str(GetSecs)])
+%         disp(['Modulo : ' num2str(mod((new-begining_experiment)*100,TR*100))])
+        continue
     end
-
-    index = 1
-    while (index <= nbKeys) && (GetSecs-timeStartReading < duration) && (quit == 0)
-        [keyIsDown,secs,keyCode] = KbCheck(-1);
-        pause(0.02);
-        if ~isempty(find(keyCode))
-            if (index==3)
-                Screen('TextFont',window,'Arial');
-                Screen('TextSize',window, 30 );
-                DrawFormattedText(window,'Attendez le chronomètre svp','center','center',[255,0,0,255]);
-                pause (2)
-                Screen('Flip', window);
-                DrawFormattedText(window,'+','center','center',color);
-            end
-            index = index + 1;
-        end
-    end
-    
-    
 else
-    timeStartExperience = GetSecs;
-    while (GetSecs-timeStartExperience) < duration
+    timeStartCross = GetSecs;
+    while (GetSecs-timeStartCross) < minimal_duration
         % Display cross    
         timeStartReading = GetSecs;
         Screen('TextFont',window,'Arial');
@@ -92,11 +79,11 @@ else
         Screen('Flip', window);
 
         
-        [quit, keysTmp, timeTmp] = ReadKeys(timeStartReading,(1/frequency)/2,0);
+        [quit, keysTmp, timeTmp] = read_task_keys(timeStartReading,(1/frequency)/2,0);
         keysPressed = cat(2,keysPressed,keysTmp);
         timePressed = cat(2,timePressed,timeTmp);
         if quit break; end
-        if GetSecs-timeStartExperience >= duration break; end    
+        if GetSecs-timeStartExperience >= minimal_duration break; end    
 
         % Display black screen
         
@@ -104,7 +91,7 @@ else
         Screen('Flip', window);
         % Capture keys
         timeStartReading = GetSecs;
-        [quit, keysTmp, timeTmp] = ReadKeys(timeStartReading,(1/frequency)/2,0);
+        [quit, keysTmp, timeTmp] = read_task_keys(timeStartReading,(1/frequency)/2,0);
         keysPressed = cat(2,keysPressed,keysTmp);
         timePressed = cat(2,timePressed,timeTmp);
         if quit break; end

@@ -1,4 +1,4 @@
-function [quit, keysPressed, timePressed] = displayMessage(currentKeyboard, window, message, duration, nbKeys, frequency, color, size)
+function [quit, keysPressed, timePressed] = displayMessage(window, message, duration, nbKeys, frequency, color, size)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % [quit, keysPressed, timePressed] = displayMessage(currentKeyboard,
 % window, message, duration, nbKeys, frequency, color, size)
@@ -6,7 +6,6 @@ function [quit, keysPressed, timePressed] = displayMessage(currentKeyboard, wind
 % Cogent is required. (ESC to exit)
 %
 % INPUT:
-%   currentKeyboard
 %   duration        duration of the stimulus in secs (0 = infinite)
 %   nbKeys          number of keys pressed before exit (0 = unlimited)
 %   frequency       frequence of the blinking in Hz (0 = no blink)
@@ -53,7 +52,7 @@ if (frequency == 0)
     Screen('Flip', window);
     % Read Keyboard
     timeStartReading = GetSecs;
-    [quit, keysPressed, timePressed] = ReadKeys(currentKeyboard, timeStartReading, duration, nbKeys);
+    [quit, keysPressed, timePressed] = keys_task(currentKeyboard, timeStartReading, duration, nbKeys);
 
 else
     timeStartExperience = GetSecs;
@@ -66,7 +65,7 @@ else
 %         offset = GetSecs-timeStart;
         timeStartReading = GetSecs;
         
-        [quit, keysTmp, timeTmp] = ReadKeys(currentKeyboard, timeStartReading, 1/frequency,0);
+        [quit, keysTmp, timeTmp] = keys_task(currentKeyboard, timeStartReading, 1/frequency,0);
         keysPressed = cat(2,keysPressed,keysTmp);
         timePressed = cat(2,timePressed,timeTmp);
         if quit, break; end
@@ -78,7 +77,7 @@ else
         % Capture keys
 %         offset = GetSecs-timeStart;
         timeStartReading = GetSecs;
-        [quit, keysTmp, timeTmp] = ReadKeys(currentKeyboard, timeStartReading, 1/frequency,0);
+        [quit, keysTmp, timeTmp] = keys_task(currentKeyboard, timeStartReading, 1/frequency,0);
         keysPressed = cat(2,keysPressed,keysTmp);
         timePressed = cat(2,timePressed,timeTmp);
         if quit, break; end

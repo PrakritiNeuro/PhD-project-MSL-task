@@ -59,7 +59,7 @@ if (frequency == 0)
     Screen('Flip', window);
     % Read Keyboard
     timeStartReading = GetSecs;
-    %[quit, keysPressed, timePressed] = ReadKeys(timeStartReading,duration,nbKeys);
+    %[quit, keysPressed, timePressed] = keys_task(timeStartReading,duration,nbKeys);
 
     if nbKeys == 0 
         nbKeys = 3600; 
@@ -97,7 +97,7 @@ else
         Screen('Flip', window);
 
         
-        [quit, keysTmp, timeTmp] = ReadKeys(timeStartReading,(1/frequency)/2,0);
+        [quit, keysTmp, timeTmp] = keys_task(timeStartReading,(1/frequency)/2,0);
         keysPressed = cat(2,keysPressed,keysTmp);
         timePressed = cat(2,timePressed,timeTmp);
         if quit break; end
@@ -109,7 +109,7 @@ else
         Screen('Flip', window);
         % Capture keys
         timeStartReading = GetSecs;
-        [quit, keysTmp, timeTmp] = ReadKeys(timeStartReading,(1/frequency)/2,0);
+        [quit, keysTmp, timeTmp] = keys_task(timeStartReading,(1/frequency)/2,0);
         keysPressed = cat(2,keysPressed,keysTmp);
         timePressed = cat(2,timePressed,timeTmp);
         if quit break; end

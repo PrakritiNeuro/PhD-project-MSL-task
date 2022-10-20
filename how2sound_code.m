@@ -37,6 +37,10 @@ end
 % Fill playbuffer with content of buffer(i):
 PsychPortAudio('FillBuffer', pahandle, buffer(i));
 
+% Set volume
+divice_volume = 1; % should be between 0 to 1
+PsychPortAudio('Volume', pahandle, divice_volume)
+
 repetitions = 1;
 % Initate playback immediately (0) but wait for the actual start (1)
 time_playsound = PsychPortAudio('Start', pahandle, repetitions, 0, 1);

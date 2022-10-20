@@ -68,10 +68,11 @@ function stim_OpeningFcn(hObject, eventdata, handles, varargin)
     
     [main_dpath,~,~] = fileparts(which('stim.m'));
     
-    % add directories with stimuli/ and experiments/ to the MATLAB path
-    addpath(fullfile(main_dpath,'stimuli'))
-    addpath(fullfile(main_dpath,'experiments'))
-    addpath(fullfile(main_dpath,'analysis'))
+    % Add directories to the MATLAB path
+    addpath(fullfile(main_dpath,'stimuli'));
+    addpath(fullfile(main_dpath,'experiments'));
+    addpath(fullfile(main_dpath,'utils'));
+    addpath(fullfile(main_dpath,'analysis'));
     
     % Get parameters for the experiment from get_param....m
     param = get_param_tmr_msl();
@@ -104,7 +105,6 @@ function varargout = stim_OutputFcn(hObject, eventdata, handles)
     
     % Get default command line output from handles structure
     varargout{1} = handles.output;
-
 end
 
 %% BUTTONS
@@ -115,8 +115,15 @@ function button_PreSleep_Callback(hObject, eventdata, handles)
     % eventdata  reserved - to be defined in a future version of MATLAB
     % handles    structure with handles and user data (see GUIDATA)
     
-    exp_phase = 'PostSleep';
+    exp_phase = 'PreSleep';
+
+    % Start experiment by doing the following:
+    %   - Create soundHandSeq tripples, if needed
+    %   - Add soundHandSeq & other info to the param structure
+    %   - Save the parm structure for the subject
     param = start_experiment(handles);
+
+    % Open the menu for the PreSleep experimental phase
     ld_menuPreSleep(exp_phase, param);
 
 end
@@ -129,7 +136,14 @@ function button_PostSleep_Callback(hObject, eventdata, handles)
     % handles    structure with handles and user data (see GUIDATA)
     
     exp_phase = 'PostSleep';
+
+    % Start experiment by doing the following:
+    %   - Create soundHandSeq tripples, if needed
+    %   - Add soundHandSeq & other info to the param structure
+    %   - Save the parm structure for the subject
     param = start_experiment(handles);
+   
+    % Open the menu for the PostSleep experimental phase
     ld_menuPostSleep(exp_phase, param);
 
 end
@@ -155,13 +169,16 @@ function buttonQuit_Callback(hObject, eventdata, handles)
     
     [main_dpath,~,~] = fileparts(which('stim.m'));
     
-    % remove directories with stimuli/ and experiments/ from the MATLAB path
-    rmpath(fullfile(main_dpath,'stimuli'))
-    rmpath(fullfile(main_dpath,'experiments'))
-    rmpath(fullfile(main_dpath,'analysis'))
+    % Remove directories from the MATLAB path
+    rmpath(fullfile(main_dpath,'stimuli'));
+    rmpath(fullfile(main_dpath,'experiments'));
+    rmpath(fullfile(main_dpath,'utils'));
+    rmpath(fullfile(main_dpath,'analysis'));
     
+    % Clear & close all
+    csa;
+    close all;
     clear;
-    close;
 
 end
 
@@ -175,7 +192,7 @@ function setStimMenu(handles)
     % Should be removed when done using rmappdata
     param = getappdata(0,'param');
     
-    set(handles.dispOutputDir, 'String',param.output_dpath);
+    set(handles.dispOutputDir, 'String', param.output_dpath);
     set(handles.dispSeqA, 'String', num2str(param.seqs{1}));
     set(handles.dispSeqB, 'String', num2str(param.seqs{2}));
     
@@ -252,9 +269,8 @@ function soundHandSeq = getSoundHandSeq(param)
     soundHandSeq = [];
     for i = 1:numel(inds_sounds)
         soundHandSeq(i).sound = param.sounds{inds_sounds(i)};
-        soundHandSeq(i).hand = param.hands{inds_hands(i)};
+        soundHandSeq(i).hand = param.hands(inds_hands(i)).desc;
         soundHandSeq(i).seq = param.seqs{inds_seqs(i)};
     end
     
 end
-

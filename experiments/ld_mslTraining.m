@@ -259,7 +259,7 @@ for i = 1:numel(sequence_a_or_b)
         left_hand_key = 0;
         right_hand_key = 0;
         timeStartReading = GetSecs;
-        [quit, key, ~] = readKeys(timeStartReading, ...
+        [quit, key, ~] = keys_read(timeStartReading, ...
                                            durNoResponse, 1, 0, 100);
         if quit
             logoriginal{end+1}{1} = num2str(GetSecs - timeStartExperience);

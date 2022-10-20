@@ -34,32 +34,26 @@ It is the same as ListenChar(0). See 'help ListenChar' for more info.
 ---
 
 
-Adjust volume
+ld_introFingerMapping
+	- update logoriginal
+ 	- save_and_close()
+
+
+--- TEST
+
+SoundHandSeq
+	- should be correctly generated and stored in param (stim.m)
+
+Validate the text size ...
+
+Adjust volume - ready for the test
 
 
 
 
 
-
-Quit:
-	Check that it is consistnenly implemented in all experimental sessions
-	Make sure to save all the information
-	To do so, write a function that is called every time the 'escape' key is detected
-
-return error???
-
-
----
-
-Make a function for preloading the sound
-Don't play the sound automatically
-
-
-The quality of the images
-
-Instructions
-
-
+% Additional things to implement:
+- Open the menu only if it is not already opened
 
 
 

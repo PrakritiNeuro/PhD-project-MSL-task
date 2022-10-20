@@ -1,6 +1,6 @@
-function [quit, timePressed] = wait4ttl()
+function [quit, timePressed] = keys_wait4ttl()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% [quit, timePressed] = wait4ttl()
+% [quit, timePressed] = keys_wait4ttl()
 %
 % Wait for the TTL or for the experimenter to initiate the task
 %   TTL key = 5
@@ -18,14 +18,13 @@ function [quit, timePressed] = wait4ttl()
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[~, timePressed, keyCode, ~] = KbCheck(-3);
-keyName = KbName(keyCode);
-quit = any(contains(lower(keyName), 'esc'));
-
-while ~quit && ~any(contains(keyName, '5'))
+quit = 0;
+start_task = 0;
+while ~quit && ~start_task
     [~, timePressed, keyCode, ~] = KbCheck(-3);
     keyName = KbName(keyCode);
     quit = any(contains(lower(keyName), 'esc'));
+    start_task = any(contains(keyName, '5'));
 end
 
 end

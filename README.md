@@ -22,15 +22,22 @@ More details about the source repo "stim", can be found on GitHub: https://githu
 
 ## Auditory Stimuli
 
-The volume levels for the sound are in decibels relative to:
+The volume levels for the sound are between 0 and 1, which indicate proportion of the
+volume levels of the active device. The device volume depends on:
 	1) the equipment used for the experiment
 	2) the master system volume on the system at the time of the experiment
 
-Advice: Keep master system volume consistent across participants.
+Advice: For meaningful inferences about the volume levels, use the same equipment and
+keep master system volume consistent throughout all phases of the experiment and
+across all participants.
 
 ## GUI
 
 Use the "Quit" button to close menus. This will ensure proper saving of the data
 and releasing computational resources (e.g., memory, processing, etc.)
 
+## ADDITIONAL RESOURSES FOR PROGRAMMERS
+
+Demos to start coding with Psychtoolbox are provided together with the downloaded toolbox files.
+Here is another great resource to get started: https://peterscarfe.com/ptbtutorials.html
 

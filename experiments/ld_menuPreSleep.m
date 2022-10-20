@@ -17,7 +17,7 @@ function ld_menuPreSleep(exp_phase, param)
         choice = menu(...
                        strcat('Menu - ', exp_phase),...
                        'Sound Volume Adjustment',...
-                       'Introduction - Finger Mapping',...
+                       'Introduction - Key-Finger Mapping',...
                        'Introduction - Sequences', ...
                        'Introduction - Sound-Hand-Sequence',...
                        'Training - Phase 1', ...
@@ -27,30 +27,31 @@ function ld_menuPreSleep(exp_phase, param)
                        'Quit'...
                        );
 
+        param.exp_phase = exp_phase;
         switch choice
             case 1
-                param.task = [exp_phase, '_soundVolumeAdjustment'];
+                param.task = 'soundVolAdjustment';
                 ld_adjustVolume(param);
             case 2
-                param.task = [exp_phase, '_introFingerMapping'];
+                param.task = 'introFingerMapping';
                 ld_introFingerMapping(param);
             case 3
-                param.task = [exp_phase, '_introSeq'];
+                param.task = 'introSeq';
                 ld_introSeq(param);
             case 4
-                param.task = [exp_phase, '_introSoundHandSeq'];
+                param.task = 'introSoundHandSeq';
                 ld_introSoundHandSeq(param);
             case 5
-                param.task = [exp_phase, '_trainingPhase1'];
+                param.task = 'trainingPhase1';
                 ld_mslTraining(param, 1);
             case 6
-                param.task = [exp_phase, '_trainingPhase2'];
+                param.task = 'trainingPhase2';
                 ld_mslTraining(param, 2);
             case 7
-                param.task = [exp_phase, '_trainingPhase3'];
+                param.task = 'trainingPhase3';
                 ld_mslTraining(param, 3);
             case 8 
-                param.task = [exp_phase, '_test'];
+                param.task = 'test';
                 ld_mslTraining(param, 0, true);
             case 9
                 break;
