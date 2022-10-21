@@ -1,5 +1,5 @@
-function [window, windowSize, screenCenter] = createWindow(param)
-% [window, screenResolution, screenCenter] = createWindow(param)
+function [window, windowSize, screenCenter] = ld_createWindow(param)
+% [window, screenResolution, screenCenter] = ld_createWindow(param)
 %
 % INPUT:
 %   param           a structure with the number of window & screen parameters
@@ -11,14 +11,8 @@ function [window, windowSize, screenCenter] = createWindow(param)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    % % Screen is able to do a lot of configuration and performance checks on
-    % % open, and will print out a fair amount of detailed information when
-    % % it does.  These commands supress that checking behavior.
-    % Disable error message be carreful    
-    %Screen('Preference', 'SkipSyncTests', 1);
-    %Screen('Preference', 'SkipSyncTests', 1);
-%     Screen('Preference', 'VisualDebugLevel', 3);
-%     Screen('Preference', 'SuppressAllWarnings', 1);
+Screen('Preference', 'SkipSyncTests', 1);
+Screen('Preference', 'SuppressAllWarnings', 1);
 
 % If you use two monitors
 if param.twoMonitors 
@@ -29,7 +23,8 @@ if param.twoMonitors
         param.twoMonitors = 0; % Set twoMonitors to be false (1 monitor only)
     end
 else
-    whichScreen = 1;
+    screens = Screen('Screens');
+    whichScreen = screens(1);
 end
 
 % Set the size of the display window
@@ -55,8 +50,8 @@ end
 [window, windowRect] = PsychImaging('OpenWindow', whichScreen, black, windowRect);
 % HideCursor;
 
-% % Set up alpha-blending for smooth (anti-aliased) lines
-% Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
+% Set the blend funciton for the screen
+Screen('BlendFunction',window,'GL_SRC_ALPHA','GL_ONE_MINUS_SRC_ALPHA');
 
 % Initial screen flip
 Screen('Flip', window);
@@ -64,7 +59,7 @@ Screen('Flip', window);
 % Get the size of the on-screen window, in pixels
 windowSize = [windowRect(3) - windowRect(1), windowRect(4) - windowRect(2)];
 
-% Get the centre coordinate of the window
+% Get the center coordinate of the window
 [xCenter, yCenter] = RectCenter(windowRect);
 screenCenter = [xCenter, yCenter];
 

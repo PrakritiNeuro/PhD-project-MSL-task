@@ -1,7 +1,7 @@
- function [quit, targetKeyPressed, keysPressed, timePressed] = keys_read(...
+ function [quit, targetKeyPressed, keysPressed, timePressed] = ld_keys_read(...
     timeStartReading, duration, nbKeys, targetKey, acceptTtl, waitMax)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% [quit, keysPressed, timePressed] = keys_read(...
+% [quit, keysPressed, timePressed] = ld_keys_read(...
 %   timeStartReading, duration, nbKeys, targetKey, acceptTtl, waitMax)
 %
 % Record keys that have been pressed for a period of time. Reading at keys
@@ -49,7 +49,6 @@ if nargin < 2 || duration == 0 || isempty(duration) || isnan(duration)
 end
 
 timeStartPrevious = timeStartReading;
-keyCodePressedPrevious = zeros(1, 256);
 index = 1;
 
 quit = 0;
@@ -63,10 +62,9 @@ while ~quit && ~targetKeyPressed...
         ((GetSecs - timeStartPrevious) < waitMax)
 
     [~, secs, keyCode, ~] = KbCheck(-3);
-    keyCodePressed = keyCode & ~keyCodePressedPrevious;
+    keyName = KbName(keyCode);
 
-    if any(keyCodePressed)
-        keyName = KbName(keyCodePressed);
+    if ~isempty(keyName)
         if ~iscell(keyName), keyName = {keyName}; end
         
         quit = any(contains(lower(keyName), 'esc'));
@@ -74,14 +72,14 @@ while ~quit && ~targetKeyPressed...
         targetKeyPressed = any(contains(keyName, targetKey));
 
         if ~ quit && ...
-                (~ttlKeyPressed || (ttlKeyPressed && acceptTtl)) && ...
-                ~targetKeyPressed
+                (~ttlKeyPressed || (ttlKeyPressed && acceptTtl))
             timePressed(end+1) = secs;
             keysPressed(end+1:(numel(keysPressed)+numel(keyName))) = keyName;
             timeStartPrevious = secs;
         end
+        
+        KbReleaseWait;
     end
-    keyCodePressedPrevious = keyCode;
 end
 
 end

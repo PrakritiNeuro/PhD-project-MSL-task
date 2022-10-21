@@ -1,12 +1,16 @@
-function [errorCode] = ld_introFingerMapping(param)
+function [quit, data_saved, output_fpath] = ld_introFingerMapping(param)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % returnCode = ld_introFingerMapping(param)
 %
 % Verifying if correct button is pressed for each finger
 %
-% param:            structure containing parameters (see parameters.m)
-% returnCode:       error returned
+% INPUT
+%   param       structure containing parameters (see get_param....m)
 %
+% OUTPUT
+%   quit            [boolean]   1 - exit before compited; 0 - otherwise
+%   data_saved      [boolean]   1 - data was saved; 0 - otherwise
+%   output_fpath    [string]
 %
 % Vo An Nguyen 2009/03/26
 % Arnaud Bore 2012/10/05, CRIUGM - arnaud.bore@gmail.com
@@ -38,9 +42,9 @@ ListenChar(2);
 
 %% PRELOAD THE IMAGES
 
-img_both = imread(fullfile(param.main_dpath, 'stimuli', 'both_hands.img'));
-img_left = imread(fullfile(param.main_dpath, 'stimuli', 'left_hand.img'));
-img_right = imread(fullfile(param.main_dpath, 'stimuli', 'right_hand.img'));
+img_both = imread(fullfile(param.main_dpath, 'stimuli', 'both_hands.png'));
+img_left = imread(fullfile(param.main_dpath, 'stimuli', 'left_hand.png'));
+img_right = imread(fullfile(param.main_dpath, 'stimuli', 'right_hand.png'));
 
 %% INIT
 
@@ -56,7 +60,7 @@ tasklog = struct('desc', {}, 'onset', [], 'value', {});
 
 %% DISPLAY SETTINGS
 
-[window, windowSize, screenCenter] = createWindow(param);
+[window, screenSize, screenCenter] = ld_createWindow(param);
 
 % Text font settings
 Screen('TextFont', window, 'Arial');
@@ -70,22 +74,24 @@ titleLine = 'KEY-FINGER MAPPING';
 line1 = 'You will need to press a key according';
 line2 = 'to the number presented on the screen:';
 
+% Draw two hands; the image is drawn in the center of the screen
+imageTexture = Screen('MakeTexture', window, img_both);
+rectCenter = [screenCenter(1), screenCenter(2) * 1.2];
+dest_rect = ld_get_dest_rect(imageTexture,screenSize, rectCenter);
+Screen('DrawTexture', window, imageTexture, [], dest_rect);
+
 % Draw instructions
 DrawFormattedText(window, ...
     titleLine, ...
-    'center', screenSize(1)*0.1, gold);
+    'center', screenSize(2)*0.15, gold);
 DrawFormattedText(window, ...
     [line1, '\n', line2],...
-    'centerblock', screenSize(1)*0.2, gold);
+    'centerblock', screenSize(2)*0.25, gold);
 
 % Get ready for the task
 DrawFormattedText(window, ...
     '... GET READY FOR THE TASK ...',...
-    'center', screenSize(1)*0.8, gold);
-
-% Draw two hands; the image is drawn in the center of the screen
-imageTexture = Screen('MakeTexture', window, img_both);
-Screen('DrawTexture', window, imageTexture, [], [], 0);
+    'center', screenSize(2)*0.9, gold);
 
 % Wait for release of all keys on keyboard
 KbReleaseWait;
@@ -94,202 +100,220 @@ KbReleaseWait;
 Screen('Flip', window);
 
 % Wait for TTL or keyboard input to start the task
-[quit, ~] = keys_wait4ttl();
+[quit, ~] = ld_keys_wait4ttl();
 if quit
-    errorCode = save_and_close();
+    data_saved = 0;
+    output_fpath = '';
+    clear_and_close();
     return;
 end
 
+% Display black screen for transition
+Screen('FillRect', window, BlackIndex(window));
+Screen('Flip', window);
+pause(0.5);
+
 %% KEY-FINGER MAPPING
 
-i_restBlock = 0;
-i_perfBlock = 0;
-for i_hand = 1:numel(hands_rnd)
-    % Key-digit map
-    digits = param(hands_rnd(i_hand)).digits;
-    keys = param(hands_rnd(i_hand)).keys;
-    digits2keys_map = containers.Map(digits, keys);
+% Time the task started; is used as time 0
+timeStartTask = GetSecs;
 
-    if hands_rnd(i_hand) == left
-        hand_str = 'LEFT-HAND';
-        imageTexture = Screen('MakeTexture', window, img_left);
-    elseif shands_rnd(i_hand) == right
-        hand_str = 'RIGHT-HAND';
-        imageTexture = Screen('MakeTexture', window, img_right);
-    end
+tasklog(end+1).desc = [param.task, '-start'];
+tasklog(end).onset = GetSecs - timeStartTask;
 
-    line1 = 'Red cross: wait';
-    line2 = 'Green cross: do the task';
+try
+    output_fpath = get_output_fpath(param);
+
+    for i_hand = 1:numel(hands_rnd)
+        % Key-digit map
+        digits = param.hands(hands_rnd(i_hand)).digits;
+        keys = param.hands(hands_rnd(i_hand)).keys;
+        digits2keys_map = containers.Map(digits, keys);
     
-    % Draw instructions
-    DrawFormattedText(window, ...
-        hand_str, ...
-        'center', screenSize(1)*0.1, gold);
-    DrawFormattedText(window, ...
-        [line1, '\n', line2],...
-        'centerblock', screenSize(1)*0.2, gold);
+        % Image texture
+        if hands_rnd(i_hand) == left
+            hand_str = 'left';
+            titleLine = 'LEFT-HAND';
+            imageTexture = Screen('MakeTexture', window, img_left);
+        elseif hands_rnd(i_hand) == right
+            hand_str = 'right';
+            titleLine = 'RIGHT-HAND';
+            imageTexture = Screen('MakeTexture', window, img_right);
+        end
 
-    % Draw the hand
-    Screen('DrawTexture', window, imageTexture, [], [], 0);
-
-    % Get ready for the task
-    DrawFormattedText(window, ...
-        '... GET READY FOR THE TASK ...',...
-        'center', screenSize(1)*0.8, gold);
-    
-    % Wait for release of all keys on keyboard
-    KbReleaseWait;
-
-    % Show on the screen
-    Screen('Flip', window);
-    
-    % Wait for TTL or keyboard input to start the task
-    [quit, ~] = keys_wait4ttl();
-    if quit
-        errorCode = save_and_close();
-        return;
-    end
-    
-    % Wait for release of all keys on keyboard
-    KbReleaseWait;
-
-    % Time the task started; is used as time 0
-    timeStartTask = GetSecs;
-
-    tasklog(end+1).desc = [param.task, '-START'];
-    tasklog(end).onset = GetSecs - timeStartTask;
-
-    % Start rest block
-    i_restBlock = i_restBlock + 1;
-    rest_str = [hand_str,'-REST', num2str(i_restBlock)];
-    
-    % Save to the task log
-    tasklog(end+1).desc = [rest_str, '-START'];
-    tasklog(end).onset = GetSecs - timeStartTask;
-
-    [quit, ~, keysPressed, timePressed] = displayCrossAndReadKeys(...
-        window, screenCenter, param.introDurRest, [], [], [], [], 'red'...
-        );
-
-    % Save to the task log
-    for i = 1:numel(keysPressed)
-        tasklog(end+1).desc = [rest_str '-rep'];
-        tasklog(end).onset = timePressed(i) - timeStartTask;
-        tasklog(end).value = keysPressed{i};
-    end
-
-    % End rest block
-    tasklog(end+1).desc = [rest_str, '-END'];
-    tasklog(end).onset = GetSecs - timeStartTask;
+        % Instructions
+        line1 = 'Red cross: wait for the task to start';
+        line2 = 'Green cross: do the task';
         
-    % IF quit, save & close
-    if quit, break; end
-
-    % Start performance block
-    i_perfBlock = i_perfBlock + 1;
-    perf_str = [hand_str, -'PERF', num2str(i_perfBlock)];
-
-    digits_rnd = randsample(digits, numel(digits));
-    count_success = 0;
-
-    % Save to the task log
-    tasklog(end+1).desc = [perf_str, '-START'];
-    tasklog(end).onset = GetSecs - timeStartTask;
-
-    while count_success < numel(digits_rnd)
-        % Get the target key that corresponds to the digit
-        targetKey = digits2keys_map(digits_rnd(i_digit));
+        % Draw the hand; the image is drawn in the center of the screen
+        rectCenter = [screenCenter(1), screenCenter(2) * 1.2];
+        dest_rect = ld_get_dest_rect(imageTexture,screenSize, rectCenter);
+        Screen('DrawTexture', window, imageTexture, [], dest_rect);
         
-        % Create a message to display
-        msg = ['PRESS ', num2str(targetKey)];
+        % Draw instructions
+        DrawFormattedText(window, ...
+            titleLine, ...
+            'center', screenSize(2)*0.15, gold);
+        DrawFormattedText(window, ...
+            [line1, '\n', line2],...
+            'centerblock', screenSize(2)*0.25, gold);
+        
+        % Get ready for the task
+        DrawFormattedText(window, ...
+            '... GET READY FOR THE TASK ...',...
+            'center', screenSize(2)*0.9, gold);
+        
+        % Wait for release of all keys on keyboard
+        KbReleaseWait;
+    
+        % Show on the screen
+        Screen('Flip', window);
 
-        % Display & read the keys until the target key is captured
-        % Exits if 'Esc' is pressed
-        [quit, targetKeyPressed, keysPressed, timePressed] = displayCrossAndReadKeys(...
-            window, screenCenter, [], [], targetKey, [], [], 'green', [], msg ...
-            );
+        tasklog(end+1).desc = hand_str;
+        tasklog(end).onset = GetSecs - timeStartTask;
+
+        % Wait for TTL or keyboard input to start the task
+        [quit, ~] = ld_keys_wait4ttl();
+        if quit
+            data_saved = 0;
+            output_fpath = [];
+            clear_and_close();
+            return;
+        end
+                        
+        % Wait for release of all keys on keyboard
+        KbReleaseWait;
 
         % Save to the task log
-        tasklog(end+1).desc = [perf_str, '-', targetKey];
-        tasklog(end).onset = timePressed - timeStartTask;
-        tasklog(end).value = keysPressed;
+        tasklog(end+1).desc = 'rest-start';
+        tasklog(end).onset = GetSecs - timeStartTask;
     
-        % IF quit, save & close
-        if quit, break; end
-        
-        no_errors = targetKeyPressed && numel(keysPressed) == 1;
-        if no_errors
-            count_success = count_success + 1;
-        else
-            % Set digits order using random sampling
-            digits_rnd = randsample(digits, numel(digits));
-            count_success = 0;
+        [quit, ~, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
+            window, screenCenter, param.introDurRest, [], [], [], [], 'red'...
+            );
+    
+        % Save to the task log
+        for i = 1:numel(keysPressed)
+            tasklog(end+1).desc = 'keypress';
+            tasklog(end).onset = timePressed(i) - timeStartTask;
+            tasklog(end).value = keysPressed{i};
         end
-    end
+    
+        % End rest block
+        tasklog(end+1).desc = 'rest-end';
+        tasklog(end).onset = GetSecs - timeStartTask;
+            
+        % IF quit, save & close
+        if quit
+            data_saved = save_data(output_fpath, param, tasklog);
+            clear_and_close();
+            return;
+        end
+        
+        digits_rnd = randsample(digits, numel(digits));
+        i_digit = 0;
 
-    % End performance block
-    tasklog(end+1).desc = [perf_str, '-END'];
+        % Display black screen for transition
+        Screen('FillRect', window, BlackIndex(window));
+        Screen('Flip', window);
+        pause(0.5);
+    
+        % Save to the task log
+        tasklog(end+1).desc = 'perf-start';
+        tasklog(end).onset = GetSecs - timeStartTask;
+    
+        while i_digit < numel(digits_rnd)
+            digit_next = digits_rnd{i_digit+1};
+            % Get the target key that corresponds to the digit
+            targetKey = digits2keys_map(digit_next);
+            
+            % Create a message to display
+            msg = ['PRESS ', digit_next];
+
+            % Wait for release of all keys on keyboard
+            KbReleaseWait;
+    
+            % Display & read the keys until the target key is captured
+            % Exits if 'Esc' is pressed
+            [quit, targetKeyPressed, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
+                window, screenCenter, [], [], targetKey, [], [], 'green', [], msg ...
+                );
+    
+            % Save to the task log
+            tasklog(end+1).desc = ['targetKey=', targetKey, '-keysPressed'];
+            tasklog(end).onset = timePressed - timeStartTask;
+            tasklog(end).value = keysPressed;
+        
+            % IF quit, save & close
+            if quit
+                data_saved = save_data(output_fpath, param, tasklog);
+                clear_and_close();
+                return;
+            end
+            
+            no_errors = targetKeyPressed && numel(keysPressed) == 1;
+            if no_errors
+                i_digit = i_digit + 1;
+            else
+                % Set digits order using random sampling
+                digits_rnd = randsample(digits, numel(digits));
+                i_digit = 0;
+            end
+
+            % Display black screen for transition
+            Screen('FillRect', window, BlackIndex(window));
+            Screen('Flip', window);
+            pause(0.5);
+
+        end
+    
+        % End performance block
+        tasklog(end+1).desc = 'perf-end';
+        tasklog(end).onset = GetSecs - timeStartTask;
+    
+    end % FOR each hand
+    
+    % End session
+    tasklog(end+1).desc = [param.task, '-end'];
     tasklog(end).onset = GetSecs - timeStartTask;
 
-end % FOR each hand
+catch ME
+    disp(['ID: ' ME.identifier]);
+    rethrow(ME);
+end
 
-tasklog{end+1}{1} = num2str(GetSecs - timeStartTask);
-tasklog{end}{2} = [param.task, '_END'];
+% Save all
+data_saved = save_data(output_fpath, param, tasklog);
+
+% Clear % close all
+clear_and_close();
 
 %% UTILS
 
-    function errorCode = save_and_close()
-
-        % save file.mat
+    function output_fpath = get_output_fpath(param)
         i_name = 1;
-
         output_fpath = fullfile(param.output_dpath, ...
-            [param.subject, '_',  param.exp_phase, '_param_', num2str(i_name), '.mat']);
+            [param.subject, '_',  param.exp_phase, '_', param.task '_', num2str(i_name), '.mat']);
 
         while exist(output_fpath, 'file')
             i_name = i_name+1;
-        output_fpath = fullfile(param.outputDir, ...
+        output_fpath = fullfile(param.output_dpath, ...
             [param.subject, '_',  param.exp_phase, '_param_', num2str(i_name), '.mat']);
         end
-        save(output_fpath, 'param');
-                
-        % Close the audio device
-        if exist(pahandle, "var")
-            % Wait until end of playback (1) then stop:
-            PsychPortAudio('Stop', pahandle, 1);
-            
-            % Delete all dynamic audio buffers
-            PsychPortAudio('DeleteBuffer');
-            
-            % Close the audio device
-            PsychPortAudio('Close', pahandle);
-        end
+    end
 
+    function dataSaved = save_data(output_fpath, param, tasklog)
+        save(output_fpath, 'param', 'tasklog');
+        dataSaved = 1;
+    end
+
+    function clear_and_close()
         % Enable transmission of keypresses to Matlab
         ListenChar(0);
 
         % Close all screens
         sca;
-
-
-
-
-% Save file.mat
-i_name = 1;
-output_file_name = [param.outputDir, param.subject,'_',param.task,'_' , num2str(i_name) ,'.mat'];
-while exist(output_file_name,'file')
-    i_name = i_name+1;
-    output_file_name = [param.outputDir, param.subject,'_',param.task,'_' , num2str(i_name) ,'.mat'];
-end
-save(output_file_name, 'tasklog', 'param'); 
-
-
-        
-
-        errorCode = 0;
-
     end
-
 end
 
 

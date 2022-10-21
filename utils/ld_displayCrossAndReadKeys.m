@@ -1,11 +1,11 @@
-function [quit, targetKeyPressed, keysPressed, timePressed] = displayCrossAndReadKeys(...
+function [quit, targetKeyPressed, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
     window, screenCenter, duration, nbKeys, targetKey, waitMax, flickeringFreq, crossColor, crossSize, msg ...
     )
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% [quit, keysPressed, timePressed] = displayCross(...
+% [quit, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
 %       window, screenCenter...
 %       )
-% [quit, keysPressed, timePressed] = displayCross(...
+% [quit, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
 %       window, screenCenter, duration, nbKeys, targetKey, waitMax, flickeringFreq, crossColor, crossSize, msg...
 %       )
 %
@@ -78,35 +78,33 @@ end
 
 %%
 
-Screen('TextFont', window, 'Arial');
+% Get initial font settings
+[prevFontName,~,~] = Screen('TextFont', window, 'Arial');
+prevTextSize = Screen('TextSize', window);
 
 % Static cross without flickering
 if (flickeringFreq == 0)
-    quit = 0;
-
-    while ~quit
-        % Draw message
-        if ~isempty(msg)
-            Screen('TextSize', window, msgTxtSize);
-            DrawFormattedText(window, msg, 'center', msg_sy, msgColorCode);
-        end
-        
-        % Draw cross
-        Screen('TextSize', window, crossSize);
-        DrawFormattedText(window, '+', 'center', 'center', crossColorCode);
-    
-        % Wait for release of all keys on keyboard
-        KbReleaseWait;
-    
-        % Show on the screen
-        Screen('Flip', window);
-    
-        % Read keys
-        timeStartReading = GetSecs;
-
-        [quit, targetKeyPressed, keysPressed, timePressed] = keys_read(...
-            timeStartReading, duration, nbKeys, targetKey, 0, waitMax);
+    % Draw message
+    if ~isempty(msg)
+        Screen('TextSize', window, msgTxtSize);
+        DrawFormattedText(window, msg, 'center', msg_sy, msgColorCode);
     end
+    
+    % Draw cross
+    Screen('TextSize', window, crossSize);
+    DrawFormattedText(window, '+', 'center', 'center', crossColorCode);
+
+    % Wait for release of all keys on keyboard
+    KbReleaseWait;
+
+    % Show on the screen
+    Screen('Flip', window);
+
+    % Read keys
+    timeStartReading = GetSecs;
+
+    [quit, targetKeyPressed, keysPressed, timePressed] = ld_keys_read(...
+        timeStartReading, duration, nbKeys, targetKey, 0, waitMax);
 
  % Flickering cross
 else
@@ -132,7 +130,7 @@ else
 
         % Read keys
         timeStartReading = GetSecs;
-        [quit, targetKeyPressed, keysTmp, timeTmp] = keys_read(...
+        [quit, targetKeyPressed, keysTmp, timeTmp] = ld_keys_read(...
             timeStartReading, (1/flickeringFreq)/2);
         keysPressed = cat(2, keysPressed, keysTmp);
         timePressed = cat(2, timePressed, timeTmp);
@@ -149,10 +147,15 @@ else
         
         % read keys
         timeStartReading = GetSecs;
-        [quit, targetKeyPressed, keysTmp, timeTmp] = keys_read(...
+        [quit, targetKeyPressed, keysTmp, timeTmp] = ld_keys_read(...
             timeStartReading, (1/flickeringFreq)/2);
         keysPressed = cat(2, keysPressed, keysTmp);
         timePressed = cat(2, timePressed, timeTmp);
 
     end
+end
+
+Screen('TextFont', window, prevFontName);
+Screen('TextSize', window, prevTextSize);
+
 end

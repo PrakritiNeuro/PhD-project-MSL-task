@@ -1,4 +1,4 @@
-function param = get_param_tmr_msl(varargin)
+function param = ld_get_param_tmr_msl(varargin)
 %get_param_stim_tmr_msl()
 % get parameters for the TMR_MSL experiment
 %
@@ -52,7 +52,7 @@ hands(end).keys = {'4', '3', '2', '1'};     % Keys that correspond to each digit
 
 hands(end+1).desc = 'right';
 hands(end).digits = {'1', '2', '3', '4'};   % digits from the index to little finger
-hands(end).keys = {'A', 'B', 'C', 'D'};     % Keys that correspond to each digit
+hands(end).keys = {'7', '8', '9', '0'};     % Keys that correspond to each digit
 
 param.hands = hands;
 
@@ -63,10 +63,10 @@ param.sounds = {'sound_shortest-1-100ms.wav', 'sound_shortest-3-100ms.wav'};
 %% OTHER PARAMETERS
 
 param.durNoResponse = 5;                % max response time duration in seconds
-param.fullScreen= 1;                    % 0: subwindow, 1: whole desktop => see createWindow.m for modifications
+param.fullScreen= 0;                    % 0: subwindow, 1: whole desktop => see createWindow.m for modifications
 param.flipScreen = 0;                   % 0: don't flip, 1: flip monitor
 param.twoMonitors = 0;                  % 0: 1 monitor, 1: two monitors
-param.textSize = 60;                    % text size (in pixels)
+param.textSize = 50;                    % text size (in pixels)
 
 
 end

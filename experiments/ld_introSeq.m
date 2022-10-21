@@ -17,8 +17,9 @@ function [returnCode] = ld_introSeq(param)
 % Ella Gabitov, October 2022
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% CREATION OF THE WINDOW
-[window, param.screenResolution] = createWindow(param);
+%% DISPLAY SETTINGS
+
+[window, screenSize, screenCenter] = ld_createWindow(param);
 
 % defining local durations
 show_hand_duration  = 3; % in seconds
