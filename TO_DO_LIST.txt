@@ -31,29 +31,10 @@ It is the same as ListenChar(0). See 'help ListenChar' for more info.
 	return their "merged state".
 
 
----
-
-
-ld_introFingerMapping
-	- update logoriginal
- 	- save_and_close()
+--- IMPLEMENT OR FIX
 
 
 --- TEST
-
-SoundHandSeq
-	- should be correctly generated and stored in param (stim.m)
-
-Validate the text size ...
-
-Adjust volume - ready for the test
-
-
-
-
-
-% Additional things to implement:
-- Open the menu only if it is not already opened
 
 
 

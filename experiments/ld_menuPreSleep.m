@@ -1,4 +1,4 @@
-function ld_menuPreSleep(exp_phase, param)
+function ld_menuPreSleep(exp_phase, param_fpath)
 %MENU_D_ONE Summary of this function goes here
 %   Detailed explanation goes here
 %
@@ -27,32 +27,23 @@ function ld_menuPreSleep(exp_phase, param)
                        'Quit'...
                        );
 
-        param.exp_phase = exp_phase;
         switch choice
             case 1
-                param.task = 'soundVolAdjustment';
-                ld_adjustVolume(param);
+                ld_adjustVolume(param_fpath, exp_phase, 'soundVolAdjustment');
             case 2
-                param.task = 'introFingerMapping';
-                ld_introFingerMapping(param);
+                ld_introFingerMapping(param_fpath, exp_phase, 'introFingerMapping');
             case 3
-                param.task = 'introSeq';
-                ld_introSeq(param);
+                ld_introHandSeq(param_fpath, exp_phase, 'introHandSeq');
             case 4
-                param.task = 'introSoundHandSeq';
-                ld_introSoundHandSeq(param);
+                ld_introSoundHandSeq(param_fpath, exp_phase, 'introSoundHandSeq');
             case 5
-                param.task = 'trainingPhase1';
-                ld_mslTraining(param, 1);
+                ld_mslTraining(param_fpath, exp_phase, 'trainingPhase', 1);
             case 6
-                param.task = 'trainingPhase2';
-                ld_mslTraining(param, 2);
+                ld_mslTraining(param_fpath, exp_phase, 'trainingPhase', 2);
             case 7
-                param.task = 'trainingPhase3';
-                ld_mslTraining(param, 3);
+                ld_mslTraining(param_fpath, exp_phase, 'trainingPhase', 3);
             case 8 
-                param.task = 'test';
-                ld_mslTraining(param, 0, true);
+                ld_mslTraining(param_fpath, 'test', 0, true);
             case 9
                 break;
         end

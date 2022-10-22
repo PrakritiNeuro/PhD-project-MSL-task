@@ -33,8 +33,8 @@ function ld_menuPostSleep(exp_phase, param)
                 param.task = 'introFingerMapping';
                 ld_introFingerMapping(param);
             case 3
-                param.task = 'introSeq';
-                ld_introSeq(param);
+                param.task = 'introHandSeq';
+                ld_introHandSeq(param);
             case 4
                 param.task = 'introSoundHandSeq';
                 ld_introSoundHandSeq(param);

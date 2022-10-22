@@ -49,15 +49,15 @@ if nargin < 2 || duration == 0 || isempty(duration) || isnan(duration)
 end
 
 timeStartPrevious = timeStartReading;
-index = 1;
+countKeys = 1;
 
 quit = 0;
 targetKeyPressed = 0;
 keysPressed = {};
 timePressed = [];
 
-while ~quit && ~targetKeyPressed...
-        (index <= nbKeys) && ...
+while ~quit && ~targetKeyPressed && ...
+        (countKeys <= nbKeys) && ...
         ((GetSecs - timeStartReading) < duration) && ...
         ((GetSecs - timeStartPrevious) < waitMax)
 
@@ -67,6 +67,7 @@ while ~quit && ~targetKeyPressed...
     if ~isempty(keyName)
         if ~iscell(keyName), keyName = {keyName}; end
         
+        countKeys = countKeys + 1;
         quit = any(contains(lower(keyName), 'esc'));
         ttlKeyPressed = any(contains(keyName, '5'));
         targetKeyPressed = any(contains(keyName, targetKey));

@@ -75,7 +75,7 @@ function stim_OpeningFcn(hObject, eventdata, handles, varargin)
     addpath(fullfile(main_dpath,'analysis'));
     
     % Get parameters for the experiment from get_param....m
-    param = get_param_tmr_msl();
+    param = ld_get_param_tmr_msl();
     
     % set the path to the main directory
     param.main_dpath = main_dpath;
@@ -121,10 +121,10 @@ function button_PreSleep_Callback(hObject, eventdata, handles)
     %   - Create soundHandSeq tripples, if needed
     %   - Add soundHandSeq & other info to the param structure
     %   - Save the parm structure for the subject
-    param = start_experiment(handles);
+    param_fpath = start_experiment(handles);
 
     % Open the menu for the PreSleep experimental phase
-    ld_menuPreSleep(exp_phase, param);
+    ld_menuPreSleep(exp_phase, param_fpath);
 
 end
 
@@ -141,10 +141,10 @@ function button_PostSleep_Callback(hObject, eventdata, handles)
     %   - Create soundHandSeq tripples, if needed
     %   - Add soundHandSeq & other info to the param structure
     %   - Save the parm structure for the subject
-    param = start_experiment(handles);
+    param_fpath = start_experiment(handles);
    
     % Open the menu for the PostSleep experimental phase
-    ld_menuPostSleep(exp_phase, param);
+    ld_menuPostSleep(exp_phase, param_fpath);
 
 end
 
@@ -176,7 +176,6 @@ function buttonQuit_Callback(hObject, eventdata, handles)
     rmpath(fullfile(main_dpath,'analysis'));
     
     % Clear & close all
-    csa;
     close all;
     clear;
 
@@ -218,33 +217,35 @@ end
 
 % --- Is called on button press in PreSleep or PostSleep
 % Those are separate sessions of the experiment
-function param = start_experiment(handles)
+function param_fpath = start_experiment(handles)
 
     % Get param from application data collection
     % Is defined in stim_ChooseDesign
     % Should be removed when done using rmappdata
     param_default = getappdata(0,'param');
     
-    subject = get(handles.editSubject, 'String');
+    subject = get(handles.editSubject, 'String');    
+    param = param_default;
+    param.subject = subject;
+
+    soundHandSeq = [];
     param_fpath = fullfile(param_default.output_dpath, [subject '_param.mat']);
-    
-    param = [];
     % load existing param file
     if exist(param_fpath, 'file')
         param_load = load(param_fpath);
-        param = param_load.param;
         if isfield(param_load.param, 'soundHandSeq')
-            param = param_load.param;
+            soundHandSeq = param_load.param.soundHandSeq;
         end
     end
 
-    % set param structure if soundHandSeq field doesn't exist
-    if isempty(param)
-        param = param_default;
-        param.subject = subject;
-        param.soundHandSeq = getSoundHandSeq(param);
+    % Generate a new soundHandSeq tripple
+    if isempty(soundHandSeq)
+        soundHandSeq = getSoundHandSeq(param);
     end
     
+    param.soundHandSeq = soundHandSeq;
+
+    % Update sceen & monitors info
     param.fullScreen = get(handles.radiobuttonYesFullScreen, 'Value');
     param.flipScreen = get(handles.radiobuttonYesFlipScreen, 'Value');
     param.twoMonitors = get(handles.radiobuttonYesTwoMonitors, 'Value');

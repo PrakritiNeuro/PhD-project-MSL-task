@@ -1,6 +1,6 @@
-function [quit, data_saved, output_fpath] = ld_adjustVolume(param)
+function [quit, data_saved, output_fpath] = ld_adjustVolume(param_fpath, exp_phase, task_name)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% errorCode = ld_adjustVolume(param)
+% [quit, data_saved, output_fpath] = ld_adjustVolume(param_fpath, exp_phase, task_name)
 %
 % Adjust volume for each sound
 %
@@ -34,6 +34,19 @@ PsychDefaultSetup(2);
 % To reenable keyboard input to Matlab, press CTRL+C
 % This is the same as ListenChar(0)
 ListenChar(2);
+
+%% LOAD TASK PARAMETERS
+
+if ~exist(param_fpath, 'file')
+    warning(param_fpath);
+    warning("The param file was not found. Did you start the experiment via STIM?");
+    error('ParamFileNotFound');
+end
+
+param_load = load(param_fpath);
+param = param_load.param;
+param.exp_phase = exp_phase;
+param.task = task_name;
 
 %% INITIALIZE SOUND DRIVER & PRELOAD SOUNDS
 
@@ -119,6 +132,7 @@ Screen('Flip', window);
 if quit
     data_saved = 0;
     output_fpath = [];
+    audio_clear_and_close();
     clear_and_close();
     return;
 end
@@ -173,6 +187,7 @@ try
                 if quit
                     param.soundHandSeq(i_sound).device_volume = device_volume;
                     data_saved = save_data(output_fpath, param);
+                    audio_clear_and_close();
                     clear_and_close();
                     return;
                 end
@@ -230,28 +245,13 @@ end
 data_saved = save_data(output_fpath, param);
 
 % Clear % close all
+audio_clear_and_close();
 clear_and_close();
 
-%% UTILS
+%% AUTIO UTILS
 
-    function output_fpath = get_output_fpath(param)
-        i_name = 1;
-        output_fpath = fullfile(param.output_dpath, ...
-            [param.subject, '_',  param.exp_phase, '_param_', num2str(i_name), '.mat']);
-
-        while exist(output_fpath, 'file')
-            i_name = i_name+1;
-        output_fpath = fullfile(param.output_dpath, ...
-            [param.subject, '_',  param.exp_phase, '_param_', num2str(i_name), '.mat']);
-        end
-    end
-
-    function dataSaved = save_data(output_fpath, param)
-        save(output_fpath, 'param');
-        dataSaved = 1;
-    end
-
-    function clear_and_close()
+    % --- Audio clear and close
+    function audio_clear_and_close()
                 
         % Close the audio device
         if exist('pahandle', 'var')
@@ -264,13 +264,38 @@ clear_and_close();
             % Close the audio device
             PsychPortAudio('Close', pahandle);
         end
-
-        % Enable transmission of keypresses to Matlab
-        ListenChar(0);
-
-        % Close all screens
-        sca;
-
     end
 
 end
+
+%% utils
+
+% --- Get full path to save the output
+function output_fpath = get_output_fpath(param)
+    i_name = 1;
+    output_fpath = fullfile(param.output_dpath, ...
+        [param.subject, '_',  param.exp_phase, '_param_', num2str(i_name), '.mat']);
+
+    while exist(output_fpath, 'file')
+        i_name = i_name+1;
+    output_fpath = fullfile(param.output_dpath, ...
+        [param.subject, '_',  param.exp_phase, '_param_', num2str(i_name), '.mat']);
+    end
+end
+
+% --- Save the output
+function dataSaved = save_data(output_fpath, param)
+    save(output_fpath, 'param');
+    dataSaved = 1;
+end
+
+% --- Clear all and close
+function clear_and_close()
+    % Enable transmission of keypresses to Matlab
+    ListenChar(0);
+
+    % Close all screens
+    sca;
+end
+
+
