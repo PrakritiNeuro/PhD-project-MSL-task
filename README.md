@@ -5,20 +5,15 @@ More details about the source repo "stim", can be found on GitHub: https://githu
 
 ## Installation
 
-1/4 Clone or download stim_TMR_MSL from github
+1/3 Clone or download stim_TMR_MSL from github
 	https://github.com/EllaGab/stim_TMR_MSL.git
 	Don't move files around. Respect the structure of the github repository
 
-2/4 Download and install Psychtoolbox
+2/3 Download and install Psychtoolbox
 	http://psychtoolbox.org/download
 	Note that you will need to install GStreamer as well
 
-3/4 Download and install FFMPEG
-	https://ffmpeg.org/
-	https://www.wikihow.com/Install-FFmpeg-on-Windows
-
-4/4 Add stim.m experiments/ stimuli/ analysis/ to MATLAB path
-	Running stim.m will automatically add all the required files to the MATLAB path
+3/3 Add the main directory of the toolbox with stim.m to the MATLAB path.
 
 ## Auditory Stimuli
 
