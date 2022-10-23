@@ -1,4 +1,4 @@
-function [quit, targetKeyPressed, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
+function [quit, waitMaxPassed, targetKeyPressed, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
     window, screenCenter, duration, nbKeys, targetKey, waitMax, flickeringFreq, crossColor, crossSize, msg ...
     )
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -9,8 +9,8 @@ function [quit, targetKeyPressed, keysPressed, timePressed] = ld_displayCrossAnd
 %       window, screenCenter, duration, nbKeys, targetKey, waitMax, flickeringFreq, crossColor, crossSize, msg...
 %       )
 %
-% White cross in the middle of the screen blinking at a certain pace
-% Cogent is required. (ESC to exit)
+% Fixation cross is displayed and keys are captured using ld_keysRead
+% function. Press ESC to exit.
 %
 % INPUT:
 %   window                      Psychtoolbox window (required)
@@ -31,6 +31,7 @@ function [quit, targetKeyPressed, keysPressed, timePressed] = ld_displayCrossAnd
 %   msg         [string]        A message to present above the cross
 %
 %   quit                boolean     exited before the end (ESC)? (0: no; 1: yes)
+%   waitMaxPassed       boolean     WaitMax is over and no response? (0: no; 1: yes)
 %   targetKeyPressed    boolean     1 - if the target key was pressed; 0 - otherwise    
 %   keysPressed         {string}    a cell array containing all the key names that were pressed
 %   timePressed         [int]       a vector containing the time when the keysPressed were pressed
@@ -71,7 +72,7 @@ end
 
 % Message display settings
 if ~isempty(msg)
-    msgTxtSize = 80;
+    msgTxtSize = 60;
     msgColorCode = gold;
     msg_sy= screenCenter(2)-crossSize;
 end
@@ -103,7 +104,7 @@ if (flickeringFreq == 0)
     % Read keys
     timeStartReading = GetSecs;
 
-    [quit, targetKeyPressed, keysPressed, timePressed] = ld_keys_read(...
+    [quit, waitMaxPassed, targetKeyPressed, keysPressed, timePressed] = ld_keysRead(...
         timeStartReading, duration, nbKeys, targetKey, 0, waitMax);
 
  % Flickering cross
@@ -130,8 +131,9 @@ else
 
         % Read keys
         timeStartReading = GetSecs;
-        [quit, targetKeyPressed, keysTmp, timeTmp] = ld_keys_read(...
+        [quit, waitMaxPassed, targetKeyPressed, keysTmp, timeTmp] = ld_keysRead(...
             timeStartReading, (1/flickeringFreq)/2);
+        
         keysPressed = cat(2, keysPressed, keysTmp);
         timePressed = cat(2, timePressed, timeTmp);
         

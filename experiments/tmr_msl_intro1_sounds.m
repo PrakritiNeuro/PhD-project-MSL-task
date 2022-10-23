@@ -1,6 +1,6 @@
-function [quit, data_saved, output_fpath] = ld_adjustVolume(param_fpath, exp_phase, task_name)
+function [quit, data_saved, output_fpath] = tmr_msl_intro1_sounds(param_fpath, exp_phase, task_name)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% [quit, data_saved, output_fpath] = ld_adjustVolume(param_fpath, exp_phase, task_name)
+% [quit, data_saved, output_fpath] = tmr_msl_intro1_sounds(param_fpath, exp_phase, task_name)
 %
 % Adjust volume for each sound
 %
@@ -29,6 +29,9 @@ sca;
 %       Screen( ColorRange , window, 1, [], 1) to allow normalization of
 %       the color scheme when requested
 PsychDefaultSetup(2);
+
+% Use unified key names
+KbName('UnifyKeyNames');
 
 % Disable transmission of keypresses to Matlab
 % To reenable keyboard input to Matlab, press CTRL+C
@@ -80,9 +83,17 @@ end
 
 %% INITIALIZE KEY SETTINGS
 
-% Hands' indices
-left = 1;
-right = 2;
+% Restrict input keys to the valid keys only
+[keyCodes4check, ~] = ld_getKeys4check(param);
+RestrictKeysForKbCheck(keyCodes4check);
+
+if strcmp(param.hands(1).desc, 'left')
+    left = 1;
+    right = 2;
+else
+    left = 2;
+    right = 1;
+end
 
 % Fingers' indices
 indexFinger = 1;
@@ -127,12 +138,11 @@ KbReleaseWait;
 % Show on the screen
 Screen('Flip', window);
 
-% Wait for TTL or keyboard input to start the task
-[quit, ~] = ld_keys_wait4ttl();
+% Wait for TTL key (='5') to start the task
+[quit, ~, ~] = ld_keysWait4ttl();
 if quit
     data_saved = 0;
     output_fpath = [];
-    audio_clear_and_close();
     clear_and_close();
     return;
 end
@@ -140,7 +150,7 @@ end
 % Display black screen for transition
 Screen('FillRect', window, BlackIndex(window));
 Screen('Flip', window);
-pause(0.5);
+WaitSecs(param.transScreenDur);
 
 %% ADJUST THE VOLUME
 
@@ -173,21 +183,17 @@ try
         quit = 0;
         go2next = 0;
         while ~quit && ~ go2next
-            % Read the keys, only one key at a time
-            [~, keyCode, ~] = KbPressWait(-3);
+            [~, keyCode, ~] = KbPressWait([]);
             keyName = KbName(keyCode);
     
             % Check the keys
-            if ~isempty(keyName)
-                if ~iscell(keyName), keyName = {keyName}; end
-    
+            if ~isempty(keyName)    
                 quit = any(contains(lower(keyName), 'esc'));
                 go2next = any(contains(lower(keyName), lower(keyNext)));
     
                 if quit
                     param.soundHandSeq(i_sound).device_volume = device_volume;
                     data_saved = save_data(output_fpath, param);
-                    audio_clear_and_close();
                     clear_and_close();
                     return;
                 end
@@ -200,7 +206,7 @@ try
                     % Display black screen for transition
                     Screen('FillRect', window, BlackIndex(window));
                     Screen('Flip', window);
-                    pause(0.5);
+                    WaitSecs(param.transScreenDur);
     
                 % Adjust the volume levels, if needed, and play the sound
                 else
@@ -238,33 +244,11 @@ try
 
 catch ME
     disp(['ID: ' ME.identifier]);
-    rethrow(ME);
 end
 
-% Save all
+% Save all, clear, & close
 data_saved = save_data(output_fpath, param);
-
-% Clear % close all
-audio_clear_and_close();
 clear_and_close();
-
-%% AUTIO UTILS
-
-    % --- Audio clear and close
-    function audio_clear_and_close()
-                
-        % Close the audio device
-        if exist('pahandle', 'var')
-            % Wait until end of playback (1) then stop:
-            PsychPortAudio('Stop', pahandle, 1);
-            
-            % Delete all dynamic audio buffers
-            PsychPortAudio('DeleteBuffer');
-            
-            % Close the audio device
-            PsychPortAudio('Close', pahandle);
-        end
-    end
 
 end
 
@@ -289,13 +273,16 @@ function dataSaved = save_data(output_fpath, param)
     dataSaved = 1;
 end
 
-% --- Clear all and close
+% --- Clear and close all
 function clear_and_close()
-    % Enable transmission of keypresses to Matlab
+    Priority(0);
+    % Enable transmission of keyboard input to Matlab
     ListenChar(0);
-
-    % Close all screens
+    % Reset keys for input
+    RestrictKeysForKbCheck([]);
+    % Clean & close audio facilities
+    PsychPortAudio('DeleteBuffer');
+    PsychPortAudio('Close');
+    % Clean & close all screens
     sca;
 end
-
-

@@ -33,6 +33,16 @@ It is the same as ListenChar(0). See 'help ListenChar' for more info.
 
 --- IMPLEMENT OR FIX
 
+	- Add condition to repeate the same block if waitMaxPassed is true.
+		* Do it for hand-sequence & sound-hand-sequence intro
+
+	- Once everything is working, do the task!!! Should not be complicated:
+		* Generate the order of the tripples at the very beginning & save it
+		* Display the number of correct sequence repetitions per block
+
+	- Sometime in November, try to help with the RESULTS button
+
+
 
 --- TEST
 

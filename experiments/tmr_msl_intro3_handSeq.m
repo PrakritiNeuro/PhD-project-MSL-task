@@ -1,8 +1,11 @@
-function [quit, data_saved, output_fpath] = ld_introHandSeq(param_fpath, exp_phase, task_name)
+function [quit, data_saved, output_fpath] = tmr_msl_intro3_handSeq(param_fpath, exp_phase, task_name)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% [quit, data_saved, output_fpath] = ld_introHandSeq(param_fpath, exp_phase, task_name)
-%
-% Verifying if correct button is pressed for each finger
+% [quit, data_saved, output_fpath] = tmr_msl_intro3_handSeq(param_fpath, exp_phase, task_name)
+% Introduction of the sequences:
+%   Each sequence is associated with a different hand accoridng to the
+%   sound-hand-triple generated at the beginning of the experiment (stored
+%   in param.soundHandSeg). The task is repeated for each hand-sequence
+%   until the sequence is performed correctly three times in a row.
 %
 % INPUT
 %   param       structure containing parameters (see get_param....m)
@@ -35,6 +38,9 @@ sca;
 %       the color scheme when requested
 PsychDefaultSetup(2);
 
+% Use unified key names
+KbName('UnifyKeyNames');
+
 % Disable transmission of keypresses to Matlab
 % To reenable keyboard input to Matlab, press CTRL+C
 % This is the same as ListenChar(0)
@@ -61,9 +67,9 @@ img_right = imread(fullfile(param.main_dpath, 'stimuli', 'right_hand.png'));
 
 %% INIT
 
-% Hands indices to access the key-digit mapping
-left = 1;
-right = 2;
+% Restrict input keys to the valid keys only
+[keyCodes4check, ~] = ld_getKeys4check(param);
+RestrictKeysForKbCheck(keyCodes4check);
 
 % A structure with the task log
 tasklog = struct('desc', {}, 'onset', [], 'value', {});
@@ -89,7 +95,7 @@ line2 = 'in a comfortable pace as accurately as possible';
 % Draw two hands; the image is drawn in the center of the screen
 imageTexture = Screen('MakeTexture', window, img_both);
 rectCenter = [screenCenter(1), screenCenter(2) * 1.2];
-dest_rect = ld_get_dest_rect(imageTexture,screenSize, rectCenter);
+dest_rect = ld_getDrawRect(imageTexture,screenSize, rectCenter);
 Screen('DrawTexture', window, imageTexture, [], dest_rect);
 
 % Draw instructions
@@ -106,13 +112,13 @@ DrawFormattedText(window, ...
     'center', screenSize(2)*0.9, gold);
 
 % Wait for release of all keys on keyboard
-KbReleaseWait;
+KbReleaseWait([]);
 
 % Show on the screen
 Screen('Flip', window);
 
-% Wait for TTL or keyboard input to start the task
-[quit, ~] = ld_keys_wait4ttl();
+% Wait for TTL key (='5') to start the task
+[quit, ~, ~] = ld_keysWait4ttl();
 if quit
     data_saved = 0;
     output_fpath = '';
@@ -123,7 +129,7 @@ end
 % Display black screen for transition
 Screen('FillRect', window, BlackIndex(window));
 Screen('Flip', window);
-pause(0.5);
+WaitSecs(param.transScreenDur);
 
 %% HAND-SEQUENCE INTRO
 
@@ -141,20 +147,18 @@ try
 
     for i_rnd = 1:numel(inds_rnd)
         i_soundHandSeq = inds_rnd(i_rnd);
-        hand_str = param.soundHandSeq(i_soundHandSeq).hand;
+        hand = param.soundHandSeq(i_soundHandSeq).hand;
         seq = param.soundHandSeq(i_soundHandSeq).seq;
 
-        if strcmp(hand_str, 'left')
-            hand = left;
+        if strcmp(hand.desc, 'left')
             imageTexture = Screen('MakeTexture', window, img_left);
-        elseif strcmp(hand_str, 'right')
-            hand = right;
+        elseif strcmp(hand.desc, 'right')
             imageTexture = Screen('MakeTexture', window, img_right);
         end
 
         % Key-digit map
-        digits = param.hands(hand).digits;
-        keys = param.hands(hand).keys;
+        digits = hand.digits;
+        keys = hand.keys;
         key2digit_map = containers.Map(keys, digits);
 
         % --- HAND-SEQUENCE INSTRUCTIONS
@@ -170,7 +174,7 @@ try
 
             % Draw the hand; the image is drawn in the center of the screen
             rectCenter = [screenCenter(1), screenCenter(2) * 1.2];
-            dest_rect = ld_get_dest_rect(imageTexture,screenSize, rectCenter);
+            dest_rect = ld_getDrawRect(imageTexture,screenSize, rectCenter);
             Screen('DrawTexture', window, imageTexture, [], dest_rect);
         
             % Draw instructions
@@ -192,7 +196,7 @@ try
             % --- LETS GO ...
 
             % The sequence is shown only after the first correct key is pressed
-            % It should coerrespond to the first element of the sequence
+            % It should correspond to the first element of the sequence
             % using the corresponding hand
             msg = [];
             count_seq = 0;
@@ -201,12 +205,12 @@ try
             % Show on the screen
             Screen('Flip', window);
     
-            tasklog(end+1).desc = hand_str;
+            tasklog(end+1).desc = hand.desc;
             tasklog(end).onset = GetSecs - timeStartTask;
             tasklog(end).value = seq;
     
-            % Wait for TTL or keyboard input to start the task
-            [quit, ~] = ld_keys_wait4ttl();
+            % Wait for TTL key (='5') to start the task
+            [quit, ~, ~] = ld_keysWait4ttl();
             if quit
                 data_saved = 0;
                 output_fpath = [];
@@ -228,8 +232,10 @@ try
 
             % IF quit, save & close
             if quit
-                data_saved = save_data(output_fpath, param, tasklog);
-                clear_and_close();
+                [data_saved] = quit_task(...
+                'Interrupted by the experimenter', 'esc', ...
+                tasklog, timeStartTask, output_fpath, param ...
+                );
                 return;
             end
             
@@ -238,7 +244,7 @@ try
             % Display black screen for transition
             Screen('FillRect', window, BlackIndex(window));
             Screen('Flip', window);
-            pause(0.5);
+            WaitSecs(param.transScreenDur);
     
             % Save to the task log
             tasklog(end+1).desc = 'perf-start';
@@ -251,37 +257,40 @@ try
                 KbReleaseWait;
         
                 % Display the sequence & read one key at a time
-                % Exits if 'Esc' is pressed
-                [quit, ~, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
-                    window, screenCenter, [], 1, [], [], [], 'green', [], msg ...
+                % Press 'ESC' to exit
+                [quit, waitMaxPassed, ~, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
+                    window, screenCenter, [], 1, [], param.maxTime2resp, [], 'green', [], msg ...
                     );
 
                 % IF quit, save & close
                 if quit
-                    data_saved = save_data(output_fpath, param, tasklog);
-                    clear_and_close();
+                [data_saved] = quit_task(...
+                'Interrupted by the experimenter', 'esc', ...
+                tasklog, timeStartTask, output_fpath, param ...
+                );
                     return;
                 end
         
                 % Save to the task log
-                tasklog(end+1).desc = 'digitPressed';
-                tasklog(end).onset = timePressed - timeStartTask;
-               
-                % Convert keys to digits
-                keyPressed = keysPressed{1}(1);
+                if ~waitMaxPassed
+                    tasklog(end+1).desc = 'digitPressed';
+                    tasklog(end).onset = timePressed - timeStartTask;
+                   
+                    % Convert keys to digits
+                    keyPressed = keysPressed{1}(1);
                 
-                % Correct hand
-                if any(ismember(keys, keyPressed))
-                    digitPressed = key2digit_map(keyPressed);
-                    tasklog(end).value = digitPressed;
-                    isCorrectHand = 1;
-                    msg = num2str(seq);
-                % Wrong hand
-                else
-                    digitPressed = '-1';
-                    tasklog(end).value = keysPressed{1};
-                    footer = '... WRONG HAND, LETS TRY AGAIN ...';
-                    break;
+                    % Correct hand
+                    if any(ismember(keys, keyPressed))
+                        digitPressed = key2digit_map(keyPressed);
+                        tasklog(end).value = digitPressed;
+                        isCorrectHand = 1;
+                        msg = num2str(seq);
+                    % Wrong hand
+                    else
+                        tasklog(end).value = keysPressed{1};
+                        footer = '... WRONG HAND, LETS TRY AGAIN ...';
+                        break;
+                    end
                 end
     
                 % Digit or key pressed
@@ -310,7 +319,7 @@ try
         % Display black screen for transition
         Screen('FillRect', window, BlackIndex(window));
         Screen('Flip', window);
-        pause(0.5);
+        WaitSecs(param.transScreenDur);
 
         % --- REST BLOCK
 
@@ -323,8 +332,10 @@ try
 
         % IF quit, save & close
         if quit
-            data_saved = save_data(output_fpath, param, tasklog);
-            clear_and_close();
+            [data_saved] = quit_task(...
+            'Interrupted by the experimenter', 'esc', ...
+            tasklog, timeStartTask, output_fpath, param ...
+            );
             return;
         end
 
@@ -333,7 +344,7 @@ try
         % Display black screen for transition
         Screen('FillRect', window, BlackIndex(window));
         Screen('Flip', window);
-        pause(0.5);
+        WaitSecs(param.transScreenDur);
     
     end % FOR each soundHandSequence triple
     
@@ -341,16 +352,19 @@ try
     tasklog(end+1).desc = [param.task, '-end'];
     tasklog(end).onset = GetSecs - timeStartTask;
 
+    % Save all, clear, & close
+    data_saved = save_data(output_fpath, param, tasklog);
+    clear_and_close();
+
+% Something went wrong
 catch ME
     disp(['ID: ' ME.identifier]);
+    [data_saved] = quit_task(...
+        'Something went wrong', ME.identifier, ...
+        tasklog, timeStartTask, output_fpath, param ...
+        );
     rethrow(ME);
 end
-
-% Save all
-data_saved = save_data(output_fpath, param, tasklog);
-
-% Clear % close all
-clear_and_close();
 
 end
 
@@ -367,7 +381,7 @@ function [quit, tasklog] = rest_block(...
     tasklog(end+1).desc = 'rest-start';
     tasklog(end).onset = GetSecs - timeStartTask;
 
-    [quit, ~, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
+    [quit, ~, ~, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
         window, screenCenter, durRest, [], [], [], [], 'red'...
         );
 
@@ -385,8 +399,10 @@ function [quit, tasklog] = rest_block(...
     end
 
     % End rest block
-    tasklog(end+1).desc = 'rest-end';
-    tasklog(end).onset = GetSecs - timeStartTask;
+    if ~quit
+        tasklog(end+1).desc = 'rest-end';
+        tasklog(end).onset = GetSecs - timeStartTask;
+    end
 
 end
 
@@ -404,20 +420,34 @@ function output_fpath = get_output_fpath(param)
 end
 
 % --- Save the output
-function dataSaved = save_data(output_fpath, param, tasklog)
+function data_saved = save_data(output_fpath, param, tasklog)
     save(output_fpath, 'param', 'tasklog');
-    dataSaved = 1;
+    data_saved = 1;
 end
 
 % --- Clear all and close
 function clear_and_close()
     % Enable transmission of keypresses to Matlab
     ListenChar(0);
-
+    % Reset input keys
+    RestrictKeysForKbCheck([]);
     % Close all screens
     sca;
 end
 
+% --- Quit task
+function [data_saved] = quit_task(...
+    quit_desc, quit_value, ...
+    tasklog, timeStartTask, output_fpath, param ...
+    )
+    % Update tasklog
+    tasklog(end+1).desc = quit_desc;
+    tasklog(end).onset = GetSecs - timeStartTask;
+    tasklog(end).value = quit_value;
+    % Save, clear, & close
+    data_saved = save_data(output_fpath, param, tasklog);
+    clear_and_close();
+end
 
 
 

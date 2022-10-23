@@ -75,7 +75,7 @@ function stim_OpeningFcn(hObject, eventdata, handles, varargin)
     addpath(fullfile(main_dpath,'analysis'));
     
     % Get parameters for the experiment from get_param....m
-    param = ld_get_param_tmr_msl();
+    param = tmr_msl_get_param();
     
     % set the path to the main directory
     param.main_dpath = main_dpath;
@@ -124,7 +124,7 @@ function button_PreSleep_Callback(hObject, eventdata, handles)
     param_fpath = start_experiment(handles);
 
     % Open the menu for the PreSleep experimental phase
-    ld_menuPreSleep(exp_phase, param_fpath);
+    tmr_msl_menuPreSleep(exp_phase, param_fpath);
 
 end
 
@@ -144,7 +144,7 @@ function button_PostSleep_Callback(hObject, eventdata, handles)
     param_fpath = start_experiment(handles);
    
     % Open the menu for the PostSleep experimental phase
-    ld_menuPostSleep(exp_phase, param_fpath);
+    tmr_msl_menuPostSleep(exp_phase, param_fpath);
 
 end
 
@@ -270,7 +270,7 @@ function soundHandSeq = getSoundHandSeq(param)
     soundHandSeq = [];
     for i = 1:numel(inds_sounds)
         soundHandSeq(i).sound = param.sounds{inds_sounds(i)};
-        soundHandSeq(i).hand = param.hands(inds_hands(i)).desc;
+        soundHandSeq(i).hand = param.hands(inds_hands(i));
         soundHandSeq(i).seq = param.seqs{inds_seqs(i)};
     end
     

@@ -1,4 +1,4 @@
-function param = ld_get_param_tmr_msl(varargin)
+function param = tmr_msl_get_param()
 %get_param_stim_tmr_msl()
 % get parameters for the TMR_MSL experiment
 %
@@ -10,7 +10,7 @@ param = [];
 
 % Intro
 param.introNbSeq = 3;                       % nb of correct sequence repetitons required during intro tasks
-param.introDurRest = 5;                     % Rest duration, in seconds, during intro tasks
+param.introDurRest = 3;                     % Rest duration, in seconds, during intro tasks
 
 % training
 param.trainNbBlocks = [30 25 25];           % number of mini-blocks for each sequence for each training phase
@@ -46,6 +46,9 @@ param.seqs = seqs;
 % Hands mapping
 hands = [];
 
+% DO NOT CHANGE THE ORGER OF THE DIGITS:
+%   Keep it from the index to little finger
+
 hands(end+1).desc = 'left';
 hands(end).digits = {'1', '2', '3', '4'};   % digits from the index to little finger
 hands(end).keys = {'4', '3', '2', '1'};     % Keys that correspond to each digit
@@ -62,11 +65,11 @@ param.sounds = {'sound_shortest-1-100ms.wav', 'sound_shortest-3-100ms.wav'};
 
 %% OTHER PARAMETERS
 
-param.durNoResponse = 5;                % max response time duration in seconds
-param.fullScreen= 0;                    % 0: subwindow, 1: whole desktop => see createWindow.m for modifications
-param.flipScreen = 0;                   % 0: don't flip, 1: flip monitor
-param.twoMonitors = 0;                  % 0: 1 monitor, 1: two monitors
-param.textSize = 50;                    % text size (in pixels)
-
+param.maxTime2resp = 5;         % max time to response, in seconds
+param.fullScreen= 0;            % 0: subwindow, 1: whole desktop => see createWindow.m for modifications
+param.flipScreen = 0;           % 0: don't flip, 1: flip monitor
+param.twoMonitors = 0;          % 0: 1 monitor, 1: two monitors
+param.textSize = 45;            % text size (in pixels)
+param.transScreenDur = 0.5;     % time to present transition black screen between instructions or stimuli
 
 end

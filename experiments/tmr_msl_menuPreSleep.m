@@ -1,4 +1,4 @@
-function ld_menuPreSleep(exp_phase, param_fpath)
+function tmr_msl_menuPreSleep(exp_phase, param_fpath)
 %MENU_D_ONE Summary of this function goes here
 %   Detailed explanation goes here
 %
@@ -15,8 +15,8 @@ function ld_menuPreSleep(exp_phase, param_fpath)
     
     while nextMenu
         choice = menu(...
-                       strcat('Menu - ', exp_phase),...
-                       'Sound Volume Adjustment',...
+                       upper(strcat('Menu - ', exp_phase)),...
+                       'Introduction - Sounds and Volume Adjustment',...
                        'Introduction - Key-Finger Mapping',...
                        'Introduction - Sequences', ...
                        'Introduction - Sound-Hand-Sequence',...
@@ -29,21 +29,21 @@ function ld_menuPreSleep(exp_phase, param_fpath)
 
         switch choice
             case 1
-                ld_adjustVolume(param_fpath, exp_phase, 'soundVolAdjustment');
+                tmr_msl_intro1_sounds(param_fpath, exp_phase, 'intro1_sounds');
             case 2
-                ld_introFingerMapping(param_fpath, exp_phase, 'introFingerMapping');
+                tmr_msl_intro2_fingersMap(param_fpath, exp_phase, 'intro2_fingersMap');
             case 3
-                ld_introHandSeq(param_fpath, exp_phase, 'introHandSeq');
+                tmr_msl_intro3_handSeq(param_fpath, exp_phase, 'intro3_handSeq');
             case 4
-                ld_introSoundHandSeq(param_fpath, exp_phase, 'introSoundHandSeq');
+                tmr_msl_intro4_soundHandSeq(param_fpath, exp_phase, 'intro4_soundHandSeq');
             case 5
-                ld_mslTraining(param_fpath, exp_phase, 'trainingPhase', 1);
+                tmr_msl_task(param_fpath, exp_phase, 'training_phase', 1);
             case 6
-                ld_mslTraining(param_fpath, exp_phase, 'trainingPhase', 2);
+                tmr_msl_task(param_fpath, exp_phase, 'training_phase', 2);
             case 7
-                ld_mslTraining(param_fpath, exp_phase, 'trainingPhase', 3);
+                tmr_msl_task(param_fpath, exp_phase, 'training_phase', 3);
             case 8 
-                ld_mslTraining(param_fpath, 'test', 0, true);
+                tmr_msl_task(param_fpath, 'test', 0, true);
             case 9
                 break;
         end
