@@ -42,7 +42,8 @@ Press '5' to start the task. This is the TTL key that is expected from the scann
 to start the scanning session.
 
 If STIM crashed or was interrupted unexpectedly, the keyboard input to Matlab
-may be disabled. To enable it, press CTRL+C. It is the same as ListenChar(0).
+may be disabled. To enable it, press CTRL+C. It is the same as executing
+ListenChar(0).
 
 ## ADDITIONAL RESOURSES FOR PROGRAMMERS
 
