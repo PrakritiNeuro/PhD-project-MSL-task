@@ -38,7 +38,7 @@ and releasing computational resources (e.g., memory, processing, etc.)
 
 Press 'Escape' to interrupt the session.
 
-Press '5' start the task. This is the TTL key that is expected from the scanner
+Press '5' to start the task. This is the TTL key that is expected from the scanner
 to start the scanning session.
 
 If STIM crashed or was interrupted unexpectedly, the keyboard input to Matlab
