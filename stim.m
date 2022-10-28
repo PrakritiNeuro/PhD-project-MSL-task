@@ -245,7 +245,7 @@ function param_fpath = start_experiment(handles)
     
     param.soundHandSeq = soundHandSeq;
 
-    % Update sceen & monitors info
+    % Update screen & monitors info
     param.fullScreen = get(handles.radiobuttonYesFullScreen, 'Value');
     param.flipScreen = get(handles.radiobuttonYesFlipScreen, 'Value');
     param.twoMonitors = get(handles.radiobuttonYesTwoMonitors, 'Value');

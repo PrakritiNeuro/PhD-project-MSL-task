@@ -37,11 +37,11 @@ function tmr_msl_menuPreSleep(exp_phase, param_fpath)
             case 4
                 tmr_msl_intro4_soundHandSeq(param_fpath, exp_phase, 'intro4_soundHandSeq');
             case 5
-                tmr_msl_task(param_fpath, exp_phase, 'training_phase', 1);
+                tmr_msl_task(param_fpath, exp_phase, 'training', 1);
             case 6
-                tmr_msl_task(param_fpath, exp_phase, 'training_phase', 2);
+                tmr_msl_task(param_fpath, exp_phase, 'training', 2);
             case 7
-                tmr_msl_task(param_fpath, exp_phase, 'training_phase', 3);
+                tmr_msl_task(param_fpath, exp_phase, 'training', 3);
             case 8 
                 tmr_msl_task(param_fpath, 'test', 0, true);
             case 9

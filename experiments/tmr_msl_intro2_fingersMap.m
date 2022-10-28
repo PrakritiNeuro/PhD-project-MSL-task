@@ -7,7 +7,12 @@ function [quit, data_saved, output_fpath] = tmr_msl_intro2_fingersMap(param_fpat
 %   according to the digits presented on the screen (random order).
 %
 % INPUT
-%   param       structure containing parameters (see get_param....m)
+%   param_fpath     [string]    full path to the param file of the
+%                               participant; if it doesn't exist the
+%                               program throws an error
+%   exp_phase       [string]    the phase of the experiment
+%                               e.g., 'PreSleep', 'PostSleep'
+%   task_name       [string]    task name, e.g., 'intro2_fingersMap'
 %
 % OUTPUT
 %   quit            [boolean]   1 - exit before compited; 0 - otherwise
@@ -67,8 +72,8 @@ img_right = imread(fullfile(param.main_dpath, 'stimuli', 'right_hand.png'));
 %% INIT
 
 % Restrict input keys to the valid keys only
-[keyCodes4check, ~] = ld_getKeys4check(param);
-RestrictKeysForKbCheck(keyCodes4check);
+[keyCodes4input, ~] = ld_keys4input(param);
+RestrictKeysForKbCheck(keyCodes4input);
 
 % Hands
 if strcmp(param.hands(1).desc, 'left')
@@ -79,8 +84,9 @@ else
     right = 1;
 end
 
+
 % A structure with the task log
-tasklog = struct('desc', {}, 'onset', [], 'value', {});
+tasklog = struct('desc', {}, 'onset', [], 'value', {}, 'digit', []);
 tasklog(end+1).desc = 'Date and time the task started';
 tasklog(end).value = datestr(now);
 
@@ -126,7 +132,7 @@ KbReleaseWait([]);
 Screen('Flip', window);
 
 % Wait for TTL key (='5') to start the task
-[quit, ~, ~] = ld_keysWait4ttl();
+[quit, secs, ~, ~] = ld_keysWait4ttl();
 if quit
     data_saved = 0;
     output_fpath = '';
@@ -134,15 +140,15 @@ if quit
     return;
 end
 
+% Time the task started; is used as time 0
+timeStartTask = secs;
+
 % Display black screen for transition
 Screen('FillRect', window, BlackIndex(window));
 Screen('Flip', window);
 WaitSecs(param.transScreenDur);
 
 %% KEY-FINGER MAPPING
-
-% Time the task started; is used as time 0
-timeStartTask = GetSecs;
 
 tasklog(end+1).desc = [param.task, '-start'];
 tasklog(end).onset = GetSecs - timeStartTask;
@@ -154,11 +160,13 @@ try
     hands_rnd = randsample(1:numel(param.hands), numel(param.hands));
 
     for i_hand = 1:numel(hands_rnd)
-        % Key-digit map
-        digits = param.hands(hands_rnd(i_hand)).digits;
-        keys = param.hands(hands_rnd(i_hand)).keys;
-        digit2key_map = containers.Map(digits, keys);
-        key2digit_map = containers.Map(keys, digits);
+
+        % Keys & digits of the hand
+        % - are specific to the hand used in the current block
+        digits4hand = param.hands(hands_rnd(i_hand)).digits;
+        keys4hand = param.hands(hands_rnd(i_hand)).keys;
+        digit2key_map = containers.Map(digits4hand, keys4hand);
+        key2digit_map = containers.Map(keys4hand, digits4hand);
     
         % Image texture
         if hands_rnd(i_hand) == left
@@ -206,7 +214,7 @@ try
         tasklog(end).onset = GetSecs - timeStartTask;
 
         % Wait for TTL key (='5') to start the task
-        [quit, ~, ~] = ld_keysWait4ttl();
+        [quit, ~, ~, ~] = ld_keysWait4ttl();
         if quit
             data_saved = 0;
             output_fpath = [];
@@ -223,21 +231,21 @@ try
         [quit, tasklog] = rest_block(...
         timeStartTask, ...
         window, screenCenter, param.introDurRest, ...
-        tasklog, keys, key2digit_map ...
+        tasklog ...
         );
 
         % If quit, save & close
         if quit
             [data_saved] = quit_task(...
-            'Interrupted by the experimenter', 'esc', ...
+            'interrupted by the experimenter', 'esc', ...
             tasklog, timeStartTask, output_fpath, param ...
             );
             return;
         end
 
         % --- PERFORMANCE BLOCK
-                    
-        digits_rnd = randsample(digits, numel(digits));
+                
+        digits_rnd = randsample(digits4hand, numel(digits4hand));
         i_digit = 0;
 
         % Display black screen for transition
@@ -250,69 +258,65 @@ try
         tasklog(end).onset = GetSecs - timeStartTask;
     
         while i_digit < numel(digits_rnd)
+
             targetDigit = digits_rnd{i_digit+1};
             % Get the target key that corresponds to the digit
             targetKey = digit2key_map(targetDigit);
-            
+        
             % Create a message to display
             msg = ['PRESS ', targetDigit];
 
             % Wait for release of all keys on keyboard
             KbReleaseWait([]);
-    
-            % Display & read the keys until the target key is captured
-            % Exits if 'Esc' is pressed
-            [quit, waitMaxPassed, targetKeyPressed, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
-                window, screenCenter, [], [], targetKey, param.maxTime2resp, [], 'green', [], msg ...
+
+            tasklog(end+1).desc = ['target-', targetDigit];
+            tasklog(end).onset = GetSecs - timeStartTask;
+            
+            % Display the target digit & read the keys until it is captured.
+            %  Exits if the delay between consequitive keypresses if it
+            %  exceeds the waitMax time or if the 'ESC' button is pressed.
+            % 
+            [quit, waitMaxPassed, targetKeyPressed, ~, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
+                window, screenCenter, [], [], [], targetKey, param.waitMax, 'green', [], msg ...
                 );
 
             % If quit, save & close
             if quit
                 [data_saved] = quit_task(...
-                'Interrupted by the experimenter', 'esc', ...
+                'interrupted by the experimenter', 'esc', ...
                 tasklog, timeStartTask, output_fpath, param ...
                 );
                 return;
             end
+
+            % Record the captured keys into tasklog        
+            if ~isempty(keysPressed)
+                tasklog = recordInput2tasklog(...
+                    timeStartTask, tasklog, timePressed, keysPressed, key2digit_map ...
+                    );
+            end
     
-            % No response
-            if waitMaxPassed
-                % Save to the task log
-                tasklog(end+1).desc = ['targetDigit=', targetDigit, '-digitPressed'];
-                tasklog(end).onset = timePressed - timeStartTask;
-                tasklog(end).value = 'No response';
-
-                % Set digits order using random sampling
-                digits_rnd = randsample(digits, numel(digits));
-                i_digit = 0;
-
-            else
-                % Convert keys to digits
-                for i = 1:numel(keysPressed)
-                    if iscell(keysPressed{i})
-                        keyPressed = 'multikeypress';
-                        keysPressed{i} = key2digit_map(keyPressed);
-                    else
-                        keyPressed = keysPressed{i}(1);
-                        if any(ismember(keys, keyPressed))
-                            keysPressed{i} = key2digit_map(keyPressed);
-                        end
-                    end % IF multikeypress
-                end
-
-                % Save to the task log
-                tasklog(end+1).desc = ['targetDigit=', targetDigit, '-digitPressed'];
-                tasklog(end).onset = timePressed - timeStartTask;
-                tasklog(end).value = keysPressed;
-                    
-                no_errors = targetKeyPressed && numel(keysPressed) == 1;
-                if no_errors
+            if ~waitMaxPassed
+                % Only the target key was pressed
+                if targetKeyPressed && numel(keysPressed)
                     i_digit = i_digit + 1;
+
                 else
                     % Set digits order using random sampling
-                    digits_rnd = randsample(digits, numel(digits));
+                    digits_rnd = randsample(digits4hand, numel(digits4hand));
                     i_digit = 0;
                 end
+           
+            % The waitMax time is over
+            else
+                % Save to the task log
+                tasklog(end+1).desc = 'target-incomplete';
+                tasklog(end).onset = GetSecs - timeStartTask;
+                tasklog(end).value = 'time to respond passed';
+
+                % Set digits order using random sampling
+                digits_rnd = randsample(digits4hand, numel(digits4hand));
+                i_digit = 0;
 
             end % IF waitMaxPassed
 
@@ -322,30 +326,30 @@ try
             WaitSecs(param.transScreenDur);
 
         end
-    
-        % End performance block
+
+        % End of performance block
         tasklog(end+1).desc = 'perf-end';
         tasklog(end).onset = GetSecs - timeStartTask;
-
+    
         % --- REST BLOCK
 
         % Show the red cross for a specified time, update the tasklog
         [quit, tasklog] = rest_block(...
         timeStartTask, ...
         window, screenCenter, param.introDurRest, ...
-        tasklog, keys, key2digit_map ...
+        tasklog ...
         );
 
         % If quit, save & close
         if quit
             [data_saved] = quit_task(...
-            'Interrupted by the experimenter', 'esc', ...
+            'interrupted by the experimenter', 'esc', ...
             tasklog, timeStartTask, output_fpath, param ...
             );
             return;
         end
 
-        % --- GO TO NEXT
+        % --- GO TO THE NEXT
 
         % Display black screen for transition
         Screen('FillRect', window, BlackIndex(window));
@@ -366,7 +370,7 @@ try
 catch ME
     disp(['ID: ' ME.identifier]);
     [data_saved] = quit_task(...
-    'Something went wrong', ME.identifier, ...
+    'something went wrong', ME.identifier, ...
     tasklog, timeStartTask, output_fpath, param ...
     );
 
@@ -379,29 +383,23 @@ end
 function [quit, tasklog] = rest_block(...
         timeStartTask, ...
         window, screenCenter, durRest, ...
-        tasklog, keys, key2digit_map ...
+        tasklog ...
         )
 
-    % Save to the task log
+    % record to tasklog
     tasklog(end+1).desc = 'rest-start';
     tasklog(end).onset = GetSecs - timeStartTask;
 
-    [quit, ~, ~, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
+    [quit, ~, ~, ~, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
         window, screenCenter, durRest, [], [], [], [], 'red'...
         );
 
-    % Save to the task log
-    for i = 1:numel(keysPressed)
-        tasklog(end+1).desc = 'digitPressed';
-        tasklog(end).onset = timePressed(i) - timeStartTask;            
-        % convert key to digit, if possible
-        keyPressed = keysPressed{i}(1);
-        if any(ismember(keys, keyPressed))
-            tasklog(end).value = key2digit_map(keyPressed);
-        else
-            tasklog(end).value = keysPressed{i};
+        % Record the captured keys into tasklog & save
+        if ~isempty(keysPressed)
+            tasklog = recordInput2tasklog(...
+                timeStartTask, tasklog, timePressed, keysPressed ...
+                );
         end
-    end
 
     % End rest block
     if ~quit
@@ -410,6 +408,7 @@ function [quit, tasklog] = rest_block(...
     end
 
 end
+
 
 % --- Get full path to save the output
 function output_fpath = get_output_fpath(param)
@@ -424,11 +423,35 @@ function output_fpath = get_output_fpath(param)
     end
 end
 
+
 % --- Save the output
 function data_saved = save_data(output_fpath, param, tasklog)
     save(output_fpath, 'param', 'tasklog');
     data_saved = 1;
 end
+
+
+% --- Record input data into tasklog
+function tasklog = recordInput2tasklog(...
+    timeStartTask, tasklog, timePressed, keysPressed, key2digit_map ...
+    )
+
+    if nargin < 5, key2digit_map = []; end
+
+    onsets2cell = num2cell(timePressed - timeStartTask);    
+    inds_tasklog = (numel(tasklog)+1) : (numel(tasklog)+numel(keysPressed));
+    [tasklog(inds_tasklog).desc] = deal('input');
+    [tasklog(inds_tasklog).onset] = onsets2cell{:};
+    [tasklog(inds_tasklog).value] = keysPressed{:};
+    
+    % Get digits if key2digit map is given
+    if ~isempty(key2digit_map)
+        digitsPressed = ld_keys2digits(keysPressed, key2digit_map);
+        digitsPressed2cell = num2cell(digitsPressed);
+        [tasklog(inds_tasklog).digit] = digitsPressed2cell{:};
+    end
+end
+
 
 % --- Clear all and close
 function clear_and_close()
@@ -439,6 +462,7 @@ function clear_and_close()
     % Close all screens
     sca;
 end
+
 
 % --- Quit task
 function [data_saved] = quit_task(...

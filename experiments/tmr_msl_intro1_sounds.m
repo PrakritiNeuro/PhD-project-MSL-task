@@ -5,7 +5,12 @@ function [quit, data_saved, output_fpath] = tmr_msl_intro1_sounds(param_fpath, e
 % Adjust volume for each sound
 %
 % INPUT
-%   param       structure containing parameters (see get_param....m)
+%   param_fpath     [string]    full path to the param file of the
+%                               participant; if it doesn't exist the
+%                               program throws an error
+%   exp_phase       [string]    the phase of the experiment
+%                               e.g., 'PreSleep', 'PostSleep'
+%   task_name       [string]    task name, e.g., 'intro1_sounds'
 % 
 % OUTPUT
 %   quit            [boolean]   1 - exit before compited; 0 - otherwise
@@ -84,8 +89,8 @@ end
 %% INITIALIZE KEY SETTINGS
 
 % Restrict input keys to the valid keys only
-[keyCodes4check, ~] = ld_getKeys4check(param);
-RestrictKeysForKbCheck(keyCodes4check);
+[keyCodes4input, ~] = ld_keys4input(param);
+RestrictKeysForKbCheck(keyCodes4input);
 
 if strcmp(param.hands(1).desc, 'left')
     left = 1;
@@ -139,7 +144,7 @@ KbReleaseWait;
 Screen('Flip', window);
 
 % Wait for TTL key (='5') to start the task
-[quit, ~, ~] = ld_keysWait4ttl();
+[quit, ~, ~, ~] = ld_keysWait4ttl();
 if quit
     data_saved = 0;
     output_fpath = [];

@@ -1,7 +1,7 @@
-function [quit, ttlKeyPressed, key2readPressed] = ld_keysWait4ttl(keys2read)
+function [quit, secs, ttlKeyPressed, key2readPressed] = ld_keysWait4ttl(keys2read)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% [quit, ttlKeyPressed] = ld_keysWait4ttl()
-% [quit, ttlKeyPressed] = ld_keysWait4ttl(keys2read)
+% [quit, secs, ttlKeyPressed, key2readPressed] = ld_keysWait4ttl()
+% [quit, secs, ttlKeyPressed, key2readPressed] = ld_keysWait4ttl(keys2read)
 %
 % Wait for a key to present the stimulus (e.g., play the sound) or the TTL
 % key (sent from the scanner or pressed by the experimenter) to initiate
@@ -14,6 +14,7 @@ function [quit, ttlKeyPressed, key2readPressed] = ld_keysWait4ttl(keys2read)
 %
 % OUTPUT:
 %   quit            exit before the end (esc)? (0: no; 1:yes)
+%   secs            the time the expected key was pressed
 %   ttlKeyPressed   1 - TTL key was pressed, 0 - otherwise
 %   keyName         cell array with key names that were pressed      
 %
@@ -28,7 +29,7 @@ ttlKeyPressed = 0;
 key2readPressed = 0;
 
 while ~quit && ~ttlKeyPressed && ~key2readPressed
-    [~, keyCode, ~] = KbPressWait([]);
+    [secs, keyCode, ~] = KbPressWait([]);
     keyName = KbName(keyCode);
     if ~isempty(keyName)
         if ~iscell(keyName), keyName = {keyName}; end
