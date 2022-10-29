@@ -72,7 +72,6 @@ function stim_OpeningFcn(hObject, eventdata, handles, varargin)
     addpath(fullfile(main_dpath,'stimuli'));
     addpath(fullfile(main_dpath,'experiments'));
     addpath(fullfile(main_dpath,'utils'));
-    addpath(fullfile(main_dpath,'analysis'));
     
     % Get parameters for the experiment from get_param....m
     param = tmr_msl_get_param();
@@ -173,7 +172,6 @@ function buttonQuit_Callback(hObject, eventdata, handles)
     rmpath(fullfile(main_dpath,'stimuli'));
     rmpath(fullfile(main_dpath,'experiments'));
     rmpath(fullfile(main_dpath,'utils'));
-    rmpath(fullfile(main_dpath,'analysis'));
     
     % Clear & close all
     close all;

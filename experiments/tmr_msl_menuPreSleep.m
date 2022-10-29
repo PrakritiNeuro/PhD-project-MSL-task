@@ -29,13 +29,13 @@ function tmr_msl_menuPreSleep(exp_phase, param_fpath)
 
         switch choice
             case 1
-                tmr_msl_intro1_sounds(param_fpath, exp_phase, 'intro1_sounds');
+                tmr_msl_intro_sounds(param_fpath, exp_phase, 'intro1_sounds');
             case 2
-                tmr_msl_intro2_fingersMap(param_fpath, exp_phase, 'intro2_fingersMap');
+                tmr_msl_intro_fingersMap(param_fpath, exp_phase, 'intro2_fingersMap');
             case 3
-                tmr_msl_intro3_handSeq(param_fpath, exp_phase, 'intro3_handSeq');
+                tmr_msl_intro_handSeq(param_fpath, exp_phase, 'intro3_handSeq');
             case 4
-                tmr_msl_intro4_soundHandSeq(param_fpath, exp_phase, 'intro4_soundHandSeq');
+                tmr_msl_intro_soundHandSeq(param_fpath, exp_phase, 'intro4_soundHandSeq');
             case 5
                 tmr_msl_task(param_fpath, exp_phase, 'training', 1);
             case 6
@@ -43,7 +43,7 @@ function tmr_msl_menuPreSleep(exp_phase, param_fpath)
             case 7
                 tmr_msl_task(param_fpath, exp_phase, 'training', 3);
             case 8 
-                tmr_msl_task(param_fpath, 'test', 0, true);
+                tmr_msl_task(param_fpath, exp_phase, 'test');
             case 9
                 break;
         end

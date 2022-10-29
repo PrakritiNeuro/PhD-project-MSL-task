@@ -427,7 +427,7 @@ try
 
                 [quit, tasklog] = try_again_hint(...
                         timeStartTask, ...
-                        window, screenCenter, param.hintDur, msg, footer, param.textSize, ...
+                        window, screenCenter, param.hintDur, msg, param.textSize, footer, param.textSize, ...
                         tasklog ...
                         );
 
@@ -439,11 +439,6 @@ try
                     );
                     return;
                 end
-
-                % Display black screen for transition
-                Screen('FillRect', window, BlackIndex(window));
-                Screen('Flip', window);
-                WaitSecs(param.transScreenDur);
 
                 % --- REST BETWEEN PERFORMANCE BLOCKS
                     
@@ -512,14 +507,13 @@ try
         if waitMaxPassed
             tasklog(end+1).desc = 'perf-incomplete';
             tasklog(end).value = 'time to respond passed';
-            tasklog(end).onset = GetSecs - timeStartTask;
         else            
             % Is used to calculate the duration of the performance block
-            perf.end = GetSecs - timeStartTask;
             tasklog(end+1).desc = 'perf-end';
-            tasklog(end).onset = perf.end;
         end
 
+        perf.end = GetSecs - timeStartTask;
+        tasklog(end).onset = perf.end;
 
         % --- PERFORMANCE BLOCK SUMMARY
         
@@ -552,7 +546,6 @@ try
         Screen('FillRect', window, BlackIndex(window));
         Screen('Flip', window);
         WaitSecs(param.transScreenDur);
-
 
         % --- REST BETWEEN PERFORMANCE BLOCKS
 
@@ -667,7 +660,7 @@ end
 % --- Show the red cross for a specified time, & update the tasklog
 function [quit, tasklog] = try_again_hint(...
         timeStartTask, ...
-        window, screenCenter, hintDur, msg, footer, footerTxtSize, ...
+        window, screenCenter, hintDur, msg, msgTxtSize, footer, footerTxtSize, ...
         tasklog ...
         )
 
@@ -677,7 +670,7 @@ function [quit, tasklog] = try_again_hint(...
 
     [quit, ~, ~, ~, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
         window, screenCenter, hintDur, [], [], [], [], ...
-        'red', [], msg, 'gold', [], footer, 'gold', footerTxtSize ...
+        'red', [], msg, 'gold', msgTxtSize, footer, 'gold', footerTxtSize ...
         );
 
         % Record the captured keys into tasklog & save

@@ -46,11 +46,11 @@ function [quit, waitMaxPassed, targetKeysPressed, invalidKeyPressed, keysPressed
 %   Ella Gabitov, October 2022 (adapted from stim)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if nargin < 15, footerTxtSize = 60; end
-if nargin < 14, footerColor = []; end
+if nargin < 15 || isempty(footerTxtSize), footerTxtSize = 60; end
+if nargin < 14 || isempty(footerColor), footerColor = 'gray'; end
 if nargin < 13, footer = []; end
-if nargin < 12, msgTxtSize = 60; end
-if nargin < 11, msgColor = []; end
+if nargin < 12 || isempty(msgTxtSize), msgTxtSize = 60; end
+if nargin < 11 || isempty(msgColor), msgColor = 'gray'; end
 if nargin < 10, msg = []; end
 if nargin < 9 || isempty(crossSize), crossSize = 100; end
 if nargin < 8 || isempty(crossColor), crossColor = 'white'; end
@@ -62,13 +62,13 @@ if nargin < 3 || isempty(duration), duration = inf; end
 
 %% INIT
 
-red = [255, 0, 0, 255];
-green = [0, 255, 0, 255];
-white = [255, 255, 255, 255];
-black = [0, 0, 0, 0];
+red = [255, 0, 0];
+green = [0, 255, 0];
+white = [255, 255, 255];
+black = [0, 0, 0];
 gray=round((white+black)/2);
 
-gold = [255, 215, 0, 255];
+gold = [255, 215, 0];
 
 switch crossColor
     case 'red'
@@ -120,6 +120,7 @@ if ~isempty(footer)
             otherwise
                 footerColorCode = gray;
         end
+
     elseif ~isempty(footerColor)
         footerColorCode = footerColor;
     else
@@ -136,19 +137,21 @@ end
 [prevFontName,~,~] = Screen('TextFont', window, 'Arial');
 prevTextSize = Screen('TextSize', window);
 
+% Draw cross
+Screen('TextSize', window, crossSize);
+DrawFormattedText(window, '+', 'center', 'center', crossColorCode);
+
 % Draw message
 if ~isempty(msg)
     Screen('TextSize', window, msgTxtSize);
     DrawFormattedText(window, msg, 'center', msg_sy, msgColorCode);
 end
 
-% Draw cross
-Screen('TextSize', window, crossSize);
-DrawFormattedText(window, '+', 'center', 'center', crossColorCode);
-
-% Draw cross
-Screen('TextSize', window, footerTxtSize);
-DrawFormattedText(window, footer, 'center', 'center', footerColorCode);
+% Draw footer
+if ~isempty(footer)
+    Screen('TextSize', window, footerTxtSize);
+    DrawFormattedText(window, footer, 'center', footer_sy, footerColorCode);
+end
 
 % Wait for release of all keys on keyboard
 KbReleaseWait;
