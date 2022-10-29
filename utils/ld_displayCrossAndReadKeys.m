@@ -1,12 +1,14 @@
 function [quit, waitMaxPassed, targetKeysPressed, invalidKeyPressed, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
-    window, screenCenter, duration, nbKeys, validKeys, targetKeys, waitMax, crossColor, crossSize, msg ...
+    window, screenCenter, duration, nbKeys, validKeys, targetKeys, waitMax, ...
+    crossColor, crossSize, msg, msgColor, msgTxtSize, footer, footerColor, footerTxtSize ...
     )
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % [quit, waitMaxPassed, targetKeyPressed, invalidKeyPressed, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
 %       window, screenCenter...
 %       )
 % [quit, waitMaxPassed, targetKeyPressed, invalidKeyPressed, keysPressed, timePressed] = ld_displayCrossAndReadKeys(...
-%       window, screenCenter, duration, nbKeys, keys4input, targetKey, waitMax, crossColor, crossSize, msg...
+%       window, screenCenter, duration, nbKeys, keys4input, targetKey, waitMax, ...
+%       crossColor, crossSize, msg, msgColor, msgTxtSize, footer, footerColor, footerTxtSize ...
 %       )
 %
 % Fixation cross is displayed and keys are captured using ld_keysRead
@@ -27,7 +29,12 @@ function [quit, waitMaxPassed, targetKeysPressed, invalidKeyPressed, keysPressed
 %                               'red' or 'green' (default: white).
 %   crossSize       [int]       font height ex: 20, 40, 60, 80, 100...
 %                               (default: 100)
-%   msg         [string]        A message to present above the cross
+%   msg             [string]    A message to present above the cross
+%   msgColor        [string]    the color of the message: (default: gray)
+%   msgTxtSize      [string]    the text size of the message: (default: 60)
+%   footer          [string]    A footer to present at the bottom of the screen
+%   footerColor     [string]    the color of the footer: (default: the same as msgColor)
+%   footerTxtSize   [string]    the text size of the message: (default: 60)
 %
 %   quit                boolean     exited before the end (ESC)? (0: no; 1: yes)
 %   waitMaxPassed       boolean     WaitMax is over and no response? (0: no; 1: yes)
@@ -39,7 +46,11 @@ function [quit, waitMaxPassed, targetKeysPressed, invalidKeyPressed, keysPressed
 %   Ella Gabitov, October 2022 (adapted from stim)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+if nargin < 15, footerTxtSize = 60; end
+if nargin < 14, footerColor = []; end
+if nargin < 13, footer = []; end
+if nargin < 12, msgTxtSize = 60; end
+if nargin < 11, msgColor = []; end
 if nargin < 10, msg = []; end
 if nargin < 9 || isempty(crossSize), crossSize = 100; end
 if nargin < 8 || isempty(crossColor), crossColor = 'white'; end
@@ -54,6 +65,9 @@ if nargin < 3 || isempty(duration), duration = inf; end
 red = [255, 0, 0, 255];
 green = [0, 255, 0, 255];
 white = [255, 255, 255, 255];
+black = [0, 0, 0, 0];
+gray=round((white+black)/2);
+
 gold = [255, 215, 0, 255];
 
 switch crossColor
@@ -67,10 +81,54 @@ end
 
 % Message display settings
 if ~isempty(msg)
-    msgTxtSize = 60;
-    msgColorCode = gold;
+    
+    if ~isnumeric(msgColor)
+        switch msgColor
+            case 'red'
+                msgColorCode = red;
+            case 'green'
+                msgColorCode = green;
+            case 'white'
+                msgColorCode = white;
+            case 'gold'
+                msgColorCode = gold;
+            otherwise
+                msgColorCode = gray;
+        end
+    elseif ~isempty(msgColor)
+        msgColorCode = msgColor;
+    else
+        msgColorCode = gray;
+    end
+
     msg_sy= screenCenter(2)-crossSize;
 end
+
+% Footer display settings
+if ~isempty(footer)
+    
+    if ~isnumeric(footerColor)
+        switch footerColor
+            case 'red'
+                footerColorCode = red;
+            case 'green'
+                footerColorCode = green;
+            case 'white'
+                footerColorCode = white;
+            case 'gold'
+                footerColorCode = gold;
+            otherwise
+                footerColorCode = gray;
+        end
+    elseif ~isempty(footerColor)
+        footerColorCode = footerColor;
+    else
+        footerColorCode = gray;
+    end
+
+    footer_sy= screenCenter(2)*1.8;
+end
+
 
 %%
 
@@ -87,6 +145,10 @@ end
 % Draw cross
 Screen('TextSize', window, crossSize);
 DrawFormattedText(window, '+', 'center', 'center', crossColorCode);
+
+% Draw cross
+Screen('TextSize', window, footerTxtSize);
+DrawFormattedText(window, footer, 'center', 'center', footerColorCode);
 
 % Wait for release of all keys on keyboard
 KbReleaseWait;

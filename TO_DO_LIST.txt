@@ -1,8 +1,6 @@
 
 --- IMPLEMENT OR FIX
 
-	> 	Display the durataion of each block in the command window
-	> 	During the training, play the sound if there were no errors in the block
 	> 	Do only the remaining blocks if the session was initialted before
 		- This requires to save or calculate the number of completd blocks
 

@@ -78,7 +78,7 @@ RestrictKeysForKbCheck(keyCodes4input);
 
 % A structure with the task log
 tasklog = struct('desc', {}, 'onset', [], 'value', {}, 'digit', []);
-tasklog(end+1).desc = 'Date and time the task started';
+tasklog(end+1).desc = 'date and time the task started';
 tasklog(end).value = datestr(now);
 
 %% DISPLAY SETTINGS
@@ -157,10 +157,12 @@ try
         seq = param.soundHandSeq(i_soundHandSeq).seq;
 
         tasklog(end+1).desc = hand.desc;
-        tasklog(end).value = ['Seq: ', num2str(seq)];
+        tasklog(end+1).desc = 'seq';
+        tasklog(end).digit = seq;
 
         disp('---');
-        disp(upper([hand.desc, ' hand: ', num2str(seq)]));
+        disp(upper([hand.desc, ' hand']));
+        disp(upper(['sequence: ', num2str(seq)]));
 
         if strcmp(hand.desc, 'left')
             imageTexture = Screen('MakeTexture', window, img_left);
@@ -329,7 +331,7 @@ try
             end % IF waitMax time
 
 
-            % --- THE REST OF THE BLOCK AFTER SUCCESSFUL START
+            % --- COMPLETE PERFORMANCE BLOCK AFTER INITIATED SUCCESSFULLY
 
             if isCorrectStart && ~waitMaxPassed
     

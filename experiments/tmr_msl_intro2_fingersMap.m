@@ -87,7 +87,7 @@ end
 
 % A structure with the task log
 tasklog = struct('desc', {}, 'onset', [], 'value', {}, 'digit', []);
-tasklog(end+1).desc = 'Date and time the task started';
+tasklog(end+1).desc = 'date and time the task started';
 tasklog(end).value = datestr(now);
 
 %% DISPLAY SETTINGS

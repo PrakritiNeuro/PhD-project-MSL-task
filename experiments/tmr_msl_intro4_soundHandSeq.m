@@ -146,7 +146,7 @@ img_right = imread(fullfile(param.main_dpath, 'stimuli', 'right_hand.png'));
 
 % A structure with the task log
 tasklog = struct('desc', {}, 'onset', [], 'value', {}, 'digit', []);
-tasklog(end+1).desc = 'Date and time the task started';
+tasklog(end+1).desc = 'date and time the task started';
 tasklog(end).value = datestr(now);
 
 %% DISPLAY SETTINGS
@@ -227,13 +227,17 @@ try
         hand = param.soundHandSeq(i_soundHandSeq).hand;
         seq = param.soundHandSeq(i_soundHandSeq).seq;
 
+        tasklog(end+1).desc = ['block', num2str(i_block)];
         tasklog(end+1).desc = param.soundHandSeq(i_soundHandSeq).sound;
-        tasklog(end).value = ['device volume: ', num2str(vol2play)];
+        tasklog(end+1).desc = 'device volume';
+        tasklog(end).value = num2str(vol2play);
         tasklog(end+1).desc = hand.desc;
-        tasklog(end).value = ['Seq: ', num2str(seq)];
+        tasklog(end+1).desc = 'seq';
+        tasklog(end).digit = seq;
 
         disp('---');
-        disp(upper([hand.desc, ' hand: ', num2str(seq)]));
+        disp(upper([hand.desc, ' hand']));
+        disp(upper(['sequence: ', num2str(seq)]));
         disp(upper(['Sound file name: ' param.soundHandSeq(i_soundHandSeq).sound]));
         disp(upper(['Device volume: ' num2str(vol2play)]));
 
@@ -271,8 +275,7 @@ try
 
         titleLine = num2str(seq);
         line1 = 'Red cross: wait for the task to start';
-        line2 = 'White cross: listen to the sound';
-        line3 = 'Green cross: do the task';
+        line2 = 'Green cross: do the task';
         footer = '... GET READY FOR THE TASK ...';
         
         isCorrectStart = 0;     % Requires both correct hand & correct
@@ -291,7 +294,7 @@ try
                 titleLine, ...
                 'center', screenSize(2)*0.15, gold);
             DrawFormattedText(window, ...
-                [line1, '\n', line2 '\n' line3],...
+                [line1, '\n', line2],...
                 'centerblock', screenSize(2)*0.25, gold);
         
             % Get ready for the task
@@ -424,7 +427,7 @@ try
             end % IF waitMax time
 
 
-            % --- THE REST OF THE BLOCK AFTER SUCCESSFUL START
+            % --- COMPLETE PERFORMANCE BLOCK AFTER INITIATED SUCCESSFULLY
 
             if isCorrectStart && ~waitMaxPassed
 

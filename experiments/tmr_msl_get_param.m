@@ -72,5 +72,6 @@ param.flipScreen = 0;           % 0: don't flip, 1: flip monitor
 param.twoMonitors = 0;          % 0: 1 monitor, 1: two monitors
 param.textSize = 45;            % text size (in pixels)
 param.transScreenDur = 0.5;     % time to present transition black screen between instructions or stimuli
+param.hintDur = 3;              % time to present a hint if a wrong hand or wrong sequence
 
 end
