@@ -227,7 +227,7 @@ try
         hand = param.soundHandSeq(i_soundHandSeq).hand;
         seq = param.soundHandSeq(i_soundHandSeq).seq;
 
-        tasklog(end+1).desc = ['block', num2str(i_block)];
+        tasklog(end+1).desc = ['block', num2str(i_rnd)];
         tasklog(end+1).desc = param.soundHandSeq(i_soundHandSeq).sound;
         tasklog(end+1).desc = 'device volume';
         tasklog(end).value = num2str(vol2play);

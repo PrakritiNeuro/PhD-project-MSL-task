@@ -48,7 +48,7 @@ end
 
 % Open window
 [window, windowRect] = PsychImaging('OpenWindow', whichScreen, black, windowRect);
-% HideCursor;
+HideCursor;
 
 % Set the blend funciton for the screen
 Screen('BlendFunction',window,'GL_SRC_ALPHA','GL_ONE_MINUS_SRC_ALPHA');

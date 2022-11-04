@@ -108,13 +108,13 @@ switch task_name
 
     case 'test'
         nbBlocksPerSeq = param.testNbBlocksPerSeq;
-        nbSeqPerBlock = param.testNbBlocks;
+        nbSeqPerBlock = param.testNbSeqPerBlock;
         maxNbBlocksSameSeq = param.testMaxNbBlocksSameSeq;
         durRest = param.testDurRest;
         durRestBetween = param.testDurRestBetween;
         playSoundAsFeedback = 0;
 
-end
+end 
 
 % Create a vector with indices of soundHandSeq triples
 % - the length of the vector is equal to the shortest 
@@ -193,7 +193,7 @@ gold = [255, 215, 0, 255];
 %% GENERAL TASK INSTRUCTIONS
 
 % Instructions to show; '\n' indicates a new line
-titleLine = 'TRAINING';
+titleLine = upper(task_name);
 line1 = 'Red cross: wait for the task to start';
 line2 = 'Green cross: do the task';
 line_center = 'Perform the sequence \nas fast and accurately as possible'; % is displayed in the middle
@@ -307,6 +307,9 @@ try
         tasklog(end+1).desc = 'seq';
         tasklog(end).digit = seq;
 
+
+        disp('');
+        disp(['BLOCK ', num2str(i_block)]);
         disp('---');
         disp(upper([hand.desc, ' hand']));
         disp(upper(['sequence: ', num2str(seq)]));
@@ -519,7 +522,6 @@ try
         
         % Duration of the performance block
         perf_blocks(i_block).dur = perf.end - perf.start;
-        disp(num2str([perf_blocks(:).dur]));
 
         % Digits pressed
         digits_perf_block = [digits_perf_block, digitsPressed];
@@ -534,9 +536,10 @@ try
             PsychPortAudio('Start', pahandle, 1, 0, 1); % repetitions = 1
         end
 
-        disp(['--- ', num2str(i_block), ' BLOCKS COMPLETED']);
+        disp([ num2str(i_block), ' BLOCKS COMPLETED']);
         disp(['Durations (secs) ' num2str([perf_blocks(:).dur])]);
         disp(['Sequences (n)    ' num2str([perf_blocks(:).n_seq])]);
+        disp('---');
 
         % Update the number of completed blocks & save the data 
         param.nbBlocksCompleted = i_block;

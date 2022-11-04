@@ -1,13 +1,19 @@
 
 --- IMPLEMENT OR FIX
 
-	> 	Do only the remaining blocks if the session was initialted before
-		- This requires to save or calculate the number of completd blocks
+	> 	Present only the remaining blocks if the session was previously initiated
+		- The number of completed blocks should be saved in the param file
 
 
 When done:
 > hide the cursor
 > remove the rsa key
+
+
+
+
+
+
 
 
 PSYCHTOOLBOX TIPS

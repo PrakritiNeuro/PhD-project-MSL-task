@@ -108,7 +108,6 @@ while ~returnNow && ...
             
             % Only one key was pressed, check if it is a target
             if ~iscell(keyName) && ~isempty(targetKeys)
-
                 % The next target key was pressed
                 if contains(keyName, targetKeys{i_targetKey})
                     targetKeysPressed(i_targetKey) = 1;

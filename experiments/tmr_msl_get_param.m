@@ -10,17 +10,31 @@ param = [];
 
 % Intro
 param.introNbSeq = 3;                       % nb of correct sequence repetitons required during intro tasks
-param.introDurRest = 3;                     % Rest duration, in seconds, during intro tasks
+param.introDurRest = 5;                     % Rest duration, in seconds, during intro tasks
 
 % training
-param.trainNbBlocksPerSeq = [30 25 25];     % number of mini-blocks for each sequence for each training phase
+%param.trainNbBlocksPerSeq = [30 25 25];     % number of mini-blocks for each sequence for each training phase
+%param.trainNbSeqPerBlock = 3;               % nb of sequences to complete per mini block during training
+%param.trainMaxNbBlocksSameSeq = 3;          % no more than X consecutive blocks with the same sequence
+%param.trainDurRest = 15;                    % Rest duration at the start & end of training
+%param.trainDurRestBetween = [1 5];          % lower and upper boundary of jittered rest between mini blocks
+
+% Training for validation purposes (shorter)
+param.trainNbBlocksPerSeq = [1 1 1];     % number of mini-blocks for each sequence for each training phase
 param.trainNbSeqPerBlock = 3;               % nb of sequences to complete per mini block during training
 param.trainMaxNbBlocksSameSeq = 3;          % no more than X consecutive blocks with the same sequence
-param.trainDurRest = 15;                    % Rest duration at the start & end of training
+param.trainDurRest = 10;                    % Rest duration at the start & end of training
 param.trainDurRestBetween = [1 5];          % lower and upper boundary of jittered rest between mini blocks
 
-% test
-param.testNbBlocksPerSeq = 3;               % number of test blocks for each sequence
+% % test
+% param.testNbBlocksPerSeq = 3;               % number of test blocks for each sequence
+% param.testNbSeqPerBlock = 10;               % nb of sequences to complete per test block
+% param.testMaxNbBlocksSameSeq = 2;           % no more than X consecutive blocks with the same sequence
+% param.testDurRest = 15;                     % Rest duration at the start & end of training
+% param.testDurRestBetween = 15;              % Rest duration between performance blocks
+
+% test for validation purpose (shorter)
+param.testNbBlocksPerSeq = 1;               % number of test blocks for each sequence
 param.testNbSeqPerBlock = 10;               % nb of sequences to complete per test block
 param.testMaxNbBlocksSameSeq = 2;           % no more than X consecutive blocks with the same sequence
 param.testDurRest = 15;                     % Rest duration at the start & end of training
@@ -50,14 +64,21 @@ hands = [];
 % DO NOT CHANGE THE ORGER OF THE DIGITS:
 %   Keep it from the index to little finger
 
+% hands(end+1).desc = 'left';
+% hands(end).digits = {'1', '2', '3', '4'};   % digits from the index to little finger
+% hands(end).keys = {'4', '3', '2', '1'};     % Keys that correspond to each digit
+% 
+% hands(end+1).desc = 'right';
+% hands(end).digits = {'1', '2', '3', '4'};   % digits from the index to little finger
+% hands(end).keys = {'7', '8', '9', '0'};     % Keys that correspond to each digit
+
 hands(end+1).desc = 'left';
 hands(end).digits = {'1', '2', '3', '4'};   % digits from the index to little finger
-hands(end).keys = {'4', '3', '2', '1'};     % Keys that correspond to each digit
+hands(end).keys = {'1', '2', '3', '4'};     % Keys that correspond to each digit
 
 hands(end+1).desc = 'right';
 hands(end).digits = {'1', '2', '3', '4'};   % digits from the index to little finger
-hands(end).keys = {'7', '8', '9', '0'};     % Keys that correspond to each digit
-
+hands(end).keys = {'a', 'b', 'c', 'd'};     % Keys that correspond to each digit
 param.hands = hands;
 
 %% SOUND
