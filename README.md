@@ -40,6 +40,10 @@ to start the scanning session.
 If STIM crashed or was interrupted unexpectedly, the keyboard input to Matlab
 may be disabled. To enable it, press CTRL+C. It is the same as ListenChar(0).
 
+When using additional equipment, such as keypad or a second screen, connect everything before
+statring the matlab. Otherwise, the equipment will not be correctly recognized.
+
+
 ## ADDITIONAL RESOURSES FOR PROGRAMMERS
 
 Demos to start coding with Psychtoolbox are provided together with the Psychtoolbox

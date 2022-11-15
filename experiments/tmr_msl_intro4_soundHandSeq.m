@@ -190,7 +190,7 @@ KbReleaseWait;
 % Show on the screen
 Screen('Flip', window);
 
-% Wait for TTL key (='5') to start the task
+% Wait for TTL key (='5') to start the taskparam.
 [quit, secs, ~, ~] = ld_keysWait4ttl();
 if quit
     data_saved = 0;

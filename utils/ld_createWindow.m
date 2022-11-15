@@ -27,10 +27,12 @@ else
     whichScreen = screens(1);
 end
 
+% disp(['whichScreen: ', num2str(whichScreen)]);
+
 % Set the size of the display window
 [width, height]=Screen('WindowSize', whichScreen);
 if param.fullScreen
-    windowRect = [0, 0, width, height];
+    windowRect = [];
 else
     windowRect = [0, 0, width*0.6, height*0.6];
 end
