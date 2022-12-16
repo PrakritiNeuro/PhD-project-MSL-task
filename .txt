@@ -1,21 +1,4 @@
 
---- IMPLEMENT OR FIX
-
-	> 	Present only the remaining blocks if the session was previously initiated
-		- The number of completed blocks should be saved in the param file
-
-
-When done:
-> hide the cursor
-> remove the rsa key
-
-
-
-
-
-
-
-
 PSYCHTOOLBOX TIPS
 ------------------
 Can use KbCheck & KbWait to determine whether any key is down now.
