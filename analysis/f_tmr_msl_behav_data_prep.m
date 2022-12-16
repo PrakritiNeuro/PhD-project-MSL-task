@@ -3,20 +3,28 @@ function [blocks, rest] = f_tmr_msl_behav_data_prep(tasklog)
 % Ella Gabitov (gabitovella@gmail.com), 15 December 2022
 %
 %   INPUT
-%       tasklog         [struct]
+%       tasklog [struct]
 %           the output from the task with the following fields:
 %           .desc
 %           .onset
 %           .value
 %           .digit
 %
-%       nb_keys_start   [int]
-%           the number of correct keys to initiate the block
-%
 %   OUTPUT
-%       blocks
-%       values
-%       onsets
+%       blocks  [struct]
+%           Input during performance blocks with following fields:
+%           .info           [table]
+%           .input_onsets   [nb_blocks X nb_keys double] 
+%           .input_digits   [nb_blocks X nb_keys double] 
+%
+%       rest    [struct]
+%           Input during rest; is created only for validation purposes to
+%           make sure that participants followed the instructions and
+%           stoped performing the task during rest periods. The structure
+%           comprises the following fields:
+%           .input_onsets   [nb_blocks X nb_keys double] 
+%           .input_digits   [nb_blocks X nb_keys double] 
+%
 %
 
 blocks = [];
