@@ -227,7 +227,11 @@ function param_fpath = start_experiment(handles)
     param.subject = subject;
 
     soundHandSeq = [];
-    param_fpath = fullfile(param_default.output_dpath, [subject '_param.mat']);
+    subj_dpath = fullfile(param_default.output_dpath, subject);
+    if ~exist(subj_dpath, 'dir')
+        mkdir(subj_dpath);
+    end
+    param_fpath = fullfile(subj_dpath, [subject '_param.mat']);
     % load existing param file
     if exist(param_fpath, 'file')
         param_load = load(param_fpath);

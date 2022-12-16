@@ -413,12 +413,12 @@ end
 % --- Get full path to save the output
 function output_fpath = get_output_fpath(param)
     i_name = 1;
-    output_fpath = fullfile(param.output_dpath, ...
+    output_fpath = fullfile(param.output_dpath, param.subject,...
         [param.subject, '_',  param.exp_phase, '_', param.task '_', num2str(i_name), '.mat']);
 
     while exist(output_fpath, 'file')
         i_name = i_name+1;
-    output_fpath = fullfile(param.output_dpath, ...
+    output_fpath = fullfile(param.output_dpath, param.subject,...
         [param.subject, '_',  param.exp_phase, '_', param.task '_', num2str(i_name), '.mat']);
     end
 end
