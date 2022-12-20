@@ -73,15 +73,19 @@ for i_block = 1 : length(inds)-1
     block_start = inds(i_block);
     block_end = inds(i_block+1);
 
-    % Keys pressed during performance blocks
-    %   - Start and end of performance after the block was successufly initiated
-    %   - Successful block initiation corresponds to the last perf-start for the current block
-    perf_start = inds_perf_start(inds_perf_start > block_start & inds_perf_start < block_end);
-    perf_end = inds_perf_end((inds_perf_end > block_start) & (inds_perf_end < block_end));
-    onsets = [tasklog(perf_start(end)+1 : perf_end(end)-1).onset];
-    digits = [tasklog(perf_start(end)+1 : perf_end(end)-1).digit];
-    blocks.input_onsets(i_block, 1:length(onsets)) = onsets;
-    blocks.input_digits(i_block, 1:length(digits)) = digits;
+    try
+        % Keys pressed during performance blocks
+        %   - Start and end of performance after the block was successufly initiated
+        %   - Successful block initiation corresponds to the last perf-start for the current block
+        perf_start = inds_perf_start(inds_perf_start > block_start & inds_perf_start < block_end);
+        perf_end = inds_perf_end((inds_perf_end > block_start) & (inds_perf_end < block_end));
+        onsets = [tasklog(perf_start(end)+1 : perf_end(end)-1).onset];
+        digits = [tasklog(perf_start(end)+1 : perf_end(end)-1).digit];
+        blocks.input_onsets(i_block, 1:length(onsets)) = onsets;
+        blocks.input_digits(i_block, 1:length(digits)) = digits;
+    catch ME
+        disp(ME.message);
+    end
 
     % Keys pressed during rest
     rest_start = inds_rest_start(inds_rest_start > block_start & inds_rest_start < block_end);
