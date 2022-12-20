@@ -17,21 +17,23 @@ end
 % % Path to the directory to save the results
 % res_dpath = fullfile(main_dpath, 'results');
 
-src_dpath = '/Users/prakritigupta/Desktop/My MSL task/Piloting behavioural/Data /Phase 1/Final Seq 13243142/raw_data';
-res_dpath = '/Users/prakritigupta/Desktop/My MSL task/Piloting behavioural/Data /Phase 1/Final Seq 13243142/results';
+src_dpath = '';
+res_
 
 %% Subjects for analysis 
 % The data of each subject is stored in the directory with the same name as the subject identifier
 
-% % Get all subjects from the src directory
-% list_dir = dir(src_dpath);
-% subjects = {list_dir([list_dir(:).isdir]).name};
-% subjects(contains(subjects, '.')) = []; % Should not contain dots
+% Get all subjects from the src directory
+list_dir = dir(src_dpath);
+subjects = {list_dir([list_dir(:).isdir]).name};
+subjects(contains(subjects, '.')) = []; % Should not contain dots
 
 % Specify subjects explicitly
-subjects = {...
-    'P1_05_A05'...
-    };
+% subjects = {...
+%     'Subject1'...
+%     'Subject2'...
+%     'Subject3'...
+%     };
 
 %% Let's go!
 
@@ -55,8 +57,6 @@ for i_subj = 1 : length(subjects)
 
     for i_fname = 1 : length(fnames)
         src_fpath = fullfile(src_subj_dpath, fnames{i_fname});
-        
-        disp(src_fpath);
         
         % Load the data
         data_loaded = load(src_fpath);
