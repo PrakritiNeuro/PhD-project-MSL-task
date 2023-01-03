@@ -98,6 +98,13 @@ for i_block = 1 : length(inds)-1
     end
 end
 
+% Add rows with zeros for incomplete blocks at the end
+n_incomp_blocks = height(blocks.info) - size(blocks.input_onsets, 1);
+blocks.input_onsets(end+1 : end+n_incomp_blocks, :) = zeros(n_incomp_blocks, size(blocks.input_onsets, 2));
+blocks.input_digits(end+1 : end+n_incomp_blocks, :) = zeros(n_incomp_blocks, size(blocks.input_digits, 2));
+
+end
+
 
     
 
